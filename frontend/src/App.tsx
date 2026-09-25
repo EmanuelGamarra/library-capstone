@@ -1,12 +1,8 @@
 import "./App.css";
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  return (
-    <main>
-      <h1>University Library</h1>
-      <p>Frontend running successfully.</p>
-    </main>
-  );
+  return <AppRoutes />;
 }
 
 export default App;
