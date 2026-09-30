@@ -3,8 +3,9 @@ export const theme = {
     primary: "#3d5a6c",
     secondary: "#c9a227",
 
-    background: "#FFFFFF",
+    background: "#FAF6EF",
     surface: "#FFFFFF",
+    surfaceMuted: "#E8E1D3",
 
     textPrimary: "#111A26",
     textSecondary: "#5F6773",
