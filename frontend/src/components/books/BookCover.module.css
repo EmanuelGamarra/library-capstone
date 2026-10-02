@@ -1,0 +1,30 @@
+.coverContainer {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-control);
+}
+
+.coverImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+
+  transition: transform 200ms ease;
+}
+
+.coverFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  padding: var(--spacing-base);
+
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  text-align: center;
+}
