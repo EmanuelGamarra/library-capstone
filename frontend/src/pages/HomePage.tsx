@@ -1,60 +1,27 @@
 import { useEffect, useState } from "react";
-import styled from "styled-components";
 import { getTrendingBooks } from "../api/openLibraryApi";
 import BookGrid from "../components/books/BookGrid";
 import type { Book } from "../types/book";
-
-const Page = styled.main`
-  width: min(100% - 32px, 1200px);
-  margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.xl} 0
-    ${({ theme }) => theme.spacing.xxxl};
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.mobile}) {
-    width: min(100% - 48px, 1200px);
-  }
-`;
-
-const PageHeader = styled.header`
-  max-width: 680px;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-`;
-
-const Title = styled.h1`
-  color: ${({ theme }) => theme.colors.textPrimary};
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 1.15;
-`;
-
-const Subtitle = styled.p`
-  margin: ${({ theme }) => theme.spacing.sm} 0 0;
-  color: ${({ theme }) => theme.colors.textSecondary};
-  font-size: 1rem;
-  line-height: 1.6;
-`;
-
-const CatalogSection = styled.section`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const SectionTitle = styled.h2`
-  color: ${({ theme }) => theme.colors.textPrimary};
-  font-size: 1.5rem;
-  line-height: 1.35;
-`;
-
-const StatusMessage = styled.p`
-  margin: 0;
-
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
+import styles from "./HomePage.module.css";
+import { useNavigate } from "react-router-dom";
+import type { BookSearchType } from "../types/bookSearch";
+import SearchBar from "../components/search/SearchBar";
 
 function HomePage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+
+  const handleSearch = (query: string, type: BookSearchType) => {
+    const params = new URLSearchParams({
+      q: query,
+      type,
+    });
+
+    navigate(`/search?${params.toString()}`);
+  };
 
   useEffect(() => {
     const loadTrendingBooks = async () => {
@@ -78,25 +45,36 @@ function HomePage() {
   }, []);
 
   return (
-    <Page>
-      <PageHeader>
-        <Title>Explore Books</Title>
-        <Subtitle>Discover your next book.</Subtitle>
-      </PageHeader>
+    <main className={styles.page}>
+      <header className={styles.pageHeader}>
+        <h1 className={styles.title}>Explore Books</h1>
 
-      <CatalogSection aria-labelledby="trending-books-heading">
-        <SectionTitle id="trending-books-heading">Trending Books</SectionTitle>
+        <p className={styles.subtitle}>Discover your next book.</p>
 
-        {isLoading && <StatusMessage>Loading books...</StatusMessage>}
-        {!isLoading && error && <StatusMessage>{error}</StatusMessage>}
+        <div className={styles.searchArea}>
+          <SearchBar onSearch={handleSearch} />
+        </div>
+      </header>
+
+      <section
+        className={styles.catalogSection}
+        aria-labelledby="trending-books-heading"
+      >
+        <h2 id="trending-books-heading" className={styles.sectionTitle}>
+          Trending Books
+        </h2>
+
+        {isLoading && <p className={styles.statusMessage}>Loading books...</p>}
+
+        {!isLoading && error && <p className={styles.statusMessage}>{error}</p>}
 
         {!isLoading && !error && books.length === 0 && (
-          <StatusMessage>No books available.</StatusMessage>
+          <p className={styles.statusMessage}>No books available.</p>
         )}
 
         {!isLoading && !error && books.length > 0 && <BookGrid books={books} />}
-      </CatalogSection>
-    </Page>
+      </section>
+    </main>
   );
 }
 

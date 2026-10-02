@@ -1,0 +1,111 @@
+:root {
+  /* Brand colors */
+  --color-primary: #111a26;
+  --color-secondary: #c9a227;
+  --color-accent: #3d5a6c;
+
+  --color-background: #faf6ef;
+  --color-surface: #ffffff;
+  --color-surface-muted: #e8e1d3;
+
+  --color-text-primary: #111a26;
+  --color-text-secondary: #5f6773;
+
+  --color-border: #d9dee5;
+
+  /* Functional colors */
+  --color-success-background: #e4efe1;
+  --color-success-text: #3f6b3f;
+
+  --color-warning-background: #f7ecd1;
+  --color-warning-text: #8a6a1d;
+
+  --color-danger-background: #f5e0de;
+  --color-danger-text: #a23b32;
+
+  /* Typography */
+  --font-heading: "Lora", serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-xxxl: 64px;
+
+  /* Radius */
+  --radius-control: 6px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(17, 26, 38, 0.08);
+
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background: var(--color-background);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+
+  background: var(--color-background);
+  color: var(--color-text-primary);
+
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: var(--font-heading);
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
