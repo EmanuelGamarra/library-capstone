@@ -1,9 +1,19 @@
 import { useSearchParams } from "react-router-dom";
 import BookGrid from "../components/books/BookGrid";
 import SearchBar from "../components/search/SearchBar";
-import { isBookSearchType, type BookSearchType } from "../types/bookSearch";
+import {
+  isBookSearchType,
+  type BookFilters,
+  type BookSearchType,
+} from "../types/bookSearch";
 import styles from "./SearchPage.module.css";
 import { useBookSearch } from "../hooks/useBookSearch";
+import FilterPanel from "../components/search/FilterPanel";
+import {
+  getBookFiltersFromSearchParams,
+  hasActiveBookFilters,
+} from "../utils/bookSearchParams";
+import { useMemo } from "react";
 
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,16 +24,58 @@ function SearchPage() {
     ? typeParam
     : "all";
 
+  const filters = useMemo(
+    () => getBookFiltersFromSearchParams(searchParams),
+    [searchParams],
+  );
+
   const { books, isLoading, error } = useBookSearch({
     query,
     type: searchType,
+    filters,
   });
 
   const handleSearch = (newQuery: string, newType: BookSearchType) => {
-    setSearchParams({
-      q: newQuery,
-      type: newType,
-    });
+    const nextParams = new URLSearchParams(searchParams);
+
+    nextParams.set("q", newQuery);
+    nextParams.set("type", newType);
+
+    setSearchParams(nextParams);
+  };
+
+  const handleApplyFilters = (newFilters: BookFilters) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (newFilters.subject) {
+      nextParams.set("subject", newFilters.subject);
+    } else {
+      nextParams.delete("subject");
+    }
+
+    if (newFilters.yearFrom !== undefined) {
+      nextParams.set("yearFrom", newFilters.yearFrom.toString());
+    } else {
+      nextParams.delete("yearFrom");
+    }
+
+    if (newFilters.yearTo !== undefined) {
+      nextParams.set("yearTo", newFilters.yearTo.toString());
+    } else {
+      nextParams.delete("yearTo");
+    }
+
+    setSearchParams(nextParams);
+  };
+
+  const handleClearFilters = () => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    nextParams.delete("subject");
+    nextParams.delete("yearFrom");
+    nextParams.delete("yearTo");
+
+    setSearchParams(nextParams);
   };
 
   const displayedBooks = query ? books : [];
@@ -44,6 +96,36 @@ function SearchPage() {
           initialType={searchType}
           onSearch={handleSearch}
         />
+
+        <FilterPanel
+          key={searchParams.toString()}
+          initialFilters={filters}
+          onApply={handleApplyFilters}
+          onClear={handleClearFilters}
+        />
+
+        {hasActiveBookFilters(filters) && (
+          <div className={styles.activeFiltersContainer}>
+            <span className={styles.activeFiltersLabel}>Active filters:</span>
+            <div className={styles.activeFiltersList}>
+              {filters.subject && (
+                <span className={styles.filterChip}>
+                  Category: <strong>{filters.subject}</strong>
+                </span>
+              )}
+              {filters.yearFrom !== undefined && (
+                <span className={styles.filterChip}>
+                  From: <strong>{filters.yearFrom}</strong>
+                </span>
+              )}
+              {filters.yearTo !== undefined && (
+                <span className={styles.filterChip}>
+                  To: <strong>{filters.yearTo}</strong>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {query && (

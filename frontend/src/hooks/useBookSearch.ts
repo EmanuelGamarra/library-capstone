@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { searchBooks } from "../api/openLibraryApi";
 import type { Book } from "../types/book";
-import type { BookSearchType } from "../types/bookSearch";
+import type { BookFilters, BookSearchType } from "../types/bookSearch";
 
 interface UseBookSearchParams {
   query: string;
   type: BookSearchType;
+  filters: BookFilters;
 }
 
 interface UseBookSearchResult {
@@ -17,6 +18,7 @@ interface UseBookSearchResult {
 export const useBookSearch = ({
   query,
   type,
+  filters,
 }: UseBookSearchParams): UseBookSearchResult => {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +39,7 @@ export const useBookSearch = ({
         const results = await searchBooks({
           query,
           type,
+          filters,
         });
 
         if (isCurrentRequest) {
@@ -61,7 +64,7 @@ export const useBookSearch = ({
     return () => {
       isCurrentRequest = false;
     };
-  }, [query, type]);
+  }, [query, type, filters]);
 
   return {
     books,

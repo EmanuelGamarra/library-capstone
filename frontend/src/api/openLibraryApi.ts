@@ -1,5 +1,9 @@
 import type { Book } from "../types/book";
-import type { BookSearchType, BookSearchParams } from "../types/bookSearch";
+import type {
+  BookSearchType,
+  BookSearchParams,
+  BookFilters,
+} from "../types/bookSearch";
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
 import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
 
@@ -8,20 +12,56 @@ const DEFAULT_CATALOG_LIMIT = 12;
 
 const BOOK_FIELDS = "key,title,author_name,cover_i,first_publish_year";
 
-const getSearchParameterName = (
-  type: BookSearchType,
-): "q" | "title" | "author" => {
+const escapeQueryValue = (value: string): string => {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+};
+
+const buildTextQuery = (query: string, type: BookSearchType): string => {
+  const escapedQuery = escapeQueryValue(query);
+
   switch (type) {
     case "title":
-      return "title";
+      return `title:"${escapedQuery}"`;
 
     case "author":
-      return "author";
+      return `author:"${escapedQuery}"`;
 
     case "all":
     default:
-      return "q";
+      return escapedQuery;
   }
+};
+
+const buildFilterClauses = (filters?: BookFilters): string[] => {
+  if (!filters) {
+    return [];
+  }
+
+  const clauses: string[] = [];
+
+  if (filters.subject) {
+    const escapedSubject = escapeQueryValue(filters.subject);
+    clauses.push(`subject:"${escapedSubject}"`);
+  }
+
+  if (filters.yearFrom !== undefined && filters.yearTo !== undefined) {
+    const form = filters.yearFrom ?? "*";
+    const to = filters.yearTo ?? "*";
+    clauses.push(`first_publish_year:[${form} TO ${to}]`);
+  }
+
+  return clauses;
+};
+
+const buildSearchQuery = ({
+  query,
+  type,
+  filters,
+}: BookSearchParams): string => {
+  const textQuery = buildTextQuery(query, type);
+  const filterClauses = buildFilterClauses(filters);
+
+  return [textQuery, ...filterClauses].join(" AND ");
 };
 
 export const getTrendingBooks = async (): Promise<Book[]> => {
@@ -48,6 +88,7 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
 export const searchBooks = async ({
   query,
   type,
+  filters,
 }: BookSearchParams): Promise<Book[]> => {
   const normalizedQuery = query.trim();
 
@@ -55,10 +96,16 @@ export const searchBooks = async ({
     return [];
   }
 
-  const searchParameter = getSearchParameterName(type);
+  const searchQuery = buildSearchQuery({
+    query: normalizedQuery,
+    type,
+    filters,
+  });
+
+  console.log("Open Library request:", searchQuery);
 
   const params = new URLSearchParams({
-    [searchParameter]: normalizedQuery,
+    q: searchQuery,
     fields: BOOK_FIELDS,
     limit: DEFAULT_CATALOG_LIMIT.toString(),
   });
