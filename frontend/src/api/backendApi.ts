@@ -5,6 +5,8 @@ interface HealthResponse {
 }
 
 export const getHealth = async (): Promise<HealthResponse> => {
+  console.log("Sending Open Library request");
+
   const response = await fetch(`${API_URL}/health`);
 
   if (!response.ok) {

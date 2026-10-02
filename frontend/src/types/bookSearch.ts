@@ -2,9 +2,16 @@ export const BOOK_SEARCH_TYPES = ["all", "title", "author"];
 
 export type BookSearchType = (typeof BOOK_SEARCH_TYPES)[number];
 
+export interface BookFilters {
+  subject?: string;
+  yearFrom?: number;
+  yearTo?: number;
+}
+
 export interface BookSearchParams {
   query: string;
   type: BookSearchType;
+  filters?: BookFilters;
 }
 
 export const isBookSearchType = (
