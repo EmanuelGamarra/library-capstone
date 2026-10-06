@@ -12,10 +12,12 @@ interface UseBookSearchParams {
   type: BookSearchType;
   filters: BookFilters;
   sort: BookSort;
+  page: number;
 }
 
 interface UseBookSearchResult {
   books: Book[];
+  totalResults: number;
   isLoading: boolean;
   error: string | null;
 }
@@ -25,8 +27,10 @@ export const useBookSearch = ({
   type,
   filters,
   sort,
+  page,
 }: UseBookSearchParams): UseBookSearchResult => {
   const [books, setBooks] = useState<Book[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,16 +51,19 @@ export const useBookSearch = ({
           type,
           filters,
           sort,
+          page,
         });
 
         if (isCurrentRequest) {
-          setBooks(results);
+          setBooks(results.books);
+          setTotalResults(results.totalResults);
         }
       } catch (error) {
         console.error(error);
 
         if (isCurrentRequest) {
           setBooks([]);
+          setTotalResults(0);
           setError("Unable to search books. Please try again later.");
         }
       } finally {
@@ -71,10 +78,11 @@ export const useBookSearch = ({
     return () => {
       isCurrentRequest = false;
     };
-  }, [query, type, filters, sort]);
+  }, [query, type, filters, sort, page]);
 
   return {
     books,
+    totalResults,
     isLoading,
     error,
   };

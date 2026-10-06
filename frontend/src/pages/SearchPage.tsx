@@ -14,9 +14,12 @@ import {
   getBookFiltersFromSearchParams,
   hasActiveBookFilters,
   parseBookSort,
+  parsePageParam,
 } from "../utils/bookSearchParams";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import SortSelect from "../components/search/SortSelect";
+import { BOOKS_PER_PAGE, MAX_CATALOG_PAGES } from "../api/openLibraryApi";
+import Pagination from "../components/search/Pagination";
 
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,18 +37,30 @@ function SearchPage() {
 
   const sort = parseBookSort(searchParams.get("sort"));
 
-  const { books, isLoading, error } = useBookSearch({
+  const page = parsePageParam(searchParams.get("page"));
+
+  const { books, totalResults, isLoading, error } = useBookSearch({
     query,
     type: searchType,
     filters,
     sort,
+    page,
   });
+
+  const actualTotalPages =
+    totalResults > 0 ? Math.ceil(totalResults / BOOKS_PER_PAGE) : 0;
+
+  const totalPages = Math.min(actualTotalPages, MAX_CATALOG_PAGES);
+
+  const resultsRef = useRef<HTMLElement>(null);
 
   const handleSearch = (newQuery: string, newType: BookSearchType) => {
     const nextParams = new URLSearchParams(searchParams);
 
     nextParams.set("q", newQuery);
     nextParams.set("type", newType);
+
+    nextParams.delete("page");
 
     setSearchParams(nextParams);
   };
@@ -101,6 +116,38 @@ function SearchPage() {
 
     setSearchParams(nextParams);
   };
+
+  const handlePageChange = (newPage: number) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (newPage <= 1) {
+      nextParams.delete("page");
+    } else {
+      nextParams.set("page", newPage.toString());
+    }
+
+    setSearchParams(nextParams);
+
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
+    if (isLoading || totalPages === 0) {
+      return;
+    }
+
+    if (page > totalPages) {
+      const nextParams = new URLSearchParams(searchParams);
+
+      if (totalPages === 1) {
+        nextParams.delete("page");
+      } else {
+        nextParams.set("page", totalPages.toString());
+      }
+
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [page, totalPages, isLoading, searchParams, setSearchParams]);
 
   const displayedBooks = query ? books : [];
 
@@ -172,6 +219,7 @@ function SearchPage() {
 
       {query && (
         <section
+          ref={resultsRef}
           className={styles.resultsSection}
           aria-labelledby="search-results-heading"
         >
@@ -192,7 +240,22 @@ function SearchPage() {
           )}
 
           {!isLoading && !error && displayedBooks.length > 0 && (
-            <BookGrid books={displayedBooks} />
+            <>
+              <BookGrid books={books} />
+
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+
+              {actualTotalPages > MAX_CATALOG_PAGES && (
+                <p className={styles.paginationHint}>
+                  (Showing the first 100 pages. Refine your search or filters to
+                  narrow the results.)
+                </p>
+              )}
+            </>
           )}
         </section>
       )}

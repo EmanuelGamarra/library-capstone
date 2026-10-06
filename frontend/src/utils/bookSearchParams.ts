@@ -45,3 +45,17 @@ export const parseBookSort = (value: string | null): BookSort => {
 
   return "relevance";
 };
+
+export const parsePageParam = (value: string | null): number => {
+  if (!value) {
+    return 1;
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue) || parsedValue < 1) {
+    return 1;
+  }
+
+  return parsedValue;
+};

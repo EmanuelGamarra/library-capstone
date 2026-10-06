@@ -1,3 +1,5 @@
+import type { Book } from "./book";
+
 export const BOOK_SEARCH_TYPES = ["all", "title", "author"];
 
 export const BOOK_SORT_VALUES = ["relevance", "newest", "oldest"] as const;
@@ -17,6 +19,12 @@ export interface BookSearchParams {
   type: BookSearchType;
   filters?: BookFilters;
   sort: BookSort;
+  page: number;
+}
+
+export interface BookSearchResult {
+  books: Book[];
+  totalResults: number;
 }
 
 export const isBookSearchType = (
