@@ -5,6 +5,7 @@ import {
   isBookSearchType,
   type BookFilters,
   type BookSearchType,
+  type BookSort,
 } from "../types/bookSearch";
 import styles from "./SearchPage.module.css";
 import { useBookSearch } from "../hooks/useBookSearch";
@@ -12,8 +13,10 @@ import FilterPanel from "../components/search/FilterPanel";
 import {
   getBookFiltersFromSearchParams,
   hasActiveBookFilters,
+  parseBookSort,
 } from "../utils/bookSearchParams";
 import { useMemo } from "react";
+import SortSelect from "../components/search/SortSelect";
 
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,10 +32,13 @@ function SearchPage() {
     [searchParams],
   );
 
+  const sort = parseBookSort(searchParams.get("sort"));
+
   const { books, isLoading, error } = useBookSearch({
     query,
     type: searchType,
     filters,
+    sort,
   });
 
   const handleSearch = (newQuery: string, newType: BookSearchType) => {
@@ -65,6 +71,8 @@ function SearchPage() {
       nextParams.delete("yearTo");
     }
 
+    nextParams.delete("page");
+
     setSearchParams(nextParams);
   };
 
@@ -74,6 +82,22 @@ function SearchPage() {
     nextParams.delete("subject");
     nextParams.delete("yearFrom");
     nextParams.delete("yearTo");
+
+    nextParams.delete("page");
+
+    setSearchParams(nextParams);
+  };
+
+  const handleSortChange = (newSort: BookSort) => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (newSort === "relevance") {
+      nextParams.delete("sort");
+    } else {
+      nextParams.set("sort", newSort);
+    }
+
+    nextParams.delete("page");
 
     setSearchParams(nextParams);
   };
@@ -97,12 +121,30 @@ function SearchPage() {
           onSearch={handleSearch}
         />
 
-        <FilterPanel
-          key={searchParams.toString()}
-          initialFilters={filters}
-          onApply={handleApplyFilters}
-          onClear={handleClearFilters}
-        />
+        <div className={styles.controlsRow}>
+          <FilterPanel
+            key={searchParams.toString()}
+            initialFilters={filters}
+            onApply={handleApplyFilters}
+            onClear={handleClearFilters}
+          />
+
+          <section
+            className={styles.sortPanel}
+            aria-labelledby="sort-panel-heading"
+          >
+            <div>
+              <h2 id="sort-panel-heading" className={styles.sortTitle}>
+                Sort results
+              </h2>
+              <p className={styles.sortDescription}>
+                Choose how books are ordered.
+              </p>
+            </div>
+
+            <SortSelect value={sort} onChange={handleSortChange} />
+          </section>
+        </div>
 
         {hasActiveBookFilters(filters) && (
           <div className={styles.activeFiltersContainer}>

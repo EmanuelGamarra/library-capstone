@@ -1,4 +1,4 @@
-import type { BookSearchType } from "../../types/bookSearch";
+import { type BookSearchType } from "../../types/bookSearch";
 import { useState, type SyntheticEvent } from "react";
 import styles from "./SearchBar.module.css";
 
@@ -47,7 +47,9 @@ function SearchBar({
         className={styles.searchInput}
         type="search"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+        }}
         placeholder="Search books..."
         aria-label="Search books"
       />
