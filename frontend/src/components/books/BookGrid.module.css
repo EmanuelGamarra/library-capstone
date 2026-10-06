@@ -1,0 +1,14 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+  gap: var(--spacing-lg);
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
+}
+
+.gridItem {
+  min-width: 0;
+}
