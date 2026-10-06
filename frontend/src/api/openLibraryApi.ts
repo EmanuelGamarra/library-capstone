@@ -4,12 +4,14 @@ import type {
   BookSearchParams,
   BookFilters,
   BookSort,
+  BookSearchResult,
 } from "../types/bookSearch";
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
 import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
 
 const OPEN_LIBRARY_URL = "https://openlibrary.org";
-const DEFAULT_CATALOG_LIMIT = 12;
+export const BOOKS_PER_PAGE = 12;
+export const MAX_CATALOG_PAGES = 100;
 
 const BOOK_FIELDS = "key,title,author_name,cover_i,first_publish_year";
 
@@ -70,7 +72,7 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
     q: "trending_z_score:{0 TO *]",
     sort: "trending",
     fields: "key,title,author_name,cover_i,first_publish_year",
-    limit: DEFAULT_CATALOG_LIMIT.toString(),
+    limit: BOOKS_PER_PAGE.toString(),
   });
 
   const response = await fetch(
@@ -91,11 +93,15 @@ export const searchBooks = async ({
   type,
   filters,
   sort,
-}: BookSearchParams): Promise<Book[]> => {
+  page,
+}: BookSearchParams): Promise<BookSearchResult> => {
   const normalizedQuery = query.trim();
 
   if (!normalizedQuery) {
-    return [];
+    return {
+      books: [],
+      totalResults: 0,
+    };
   }
 
   const searchQuery = buildSearchQuery({
@@ -103,12 +109,14 @@ export const searchBooks = async ({
     type,
     filters,
     sort,
+    page,
   });
 
   const params = new URLSearchParams({
     q: searchQuery,
     fields: BOOK_FIELDS,
-    limit: DEFAULT_CATALOG_LIMIT.toString(),
+    limit: BOOKS_PER_PAGE.toString(),
+    page: page.toString(),
   });
 
   const apiSort = mapSortToOpenLibrary(sort);
@@ -127,7 +135,10 @@ export const searchBooks = async ({
 
   const data: OpenLibrarySearchResponse = await response.json();
 
-  return data.docs.map(mapOpenLibraryBook);
+  return {
+    books: data.docs.map(mapOpenLibraryBook),
+    totalResults: data.num_found,
+  };
 };
 
 const mapSortToOpenLibrary = (sort: BookSort): string | undefined => {
