@@ -1,4 +1,8 @@
-import type { BookFilters } from "../types/bookSearch";
+import {
+  BOOK_SORT_VALUES,
+  type BookFilters,
+  type BookSort,
+} from "../types/bookSearch";
 
 export const parseYearParam = (value: string | null): number | undefined => {
   if (!value) {
@@ -32,4 +36,12 @@ export const hasActiveBookFilters = (filters: BookFilters): boolean => {
     filters.yearFrom !== undefined ||
     filters.yearTo !== undefined,
   );
+};
+
+export const parseBookSort = (value: string | null): BookSort => {
+  if (value && BOOK_SORT_VALUES.includes(value as BookSort)) {
+    return value as BookSort;
+  }
+
+  return "relevance";
 };

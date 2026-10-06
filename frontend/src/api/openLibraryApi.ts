@@ -3,6 +3,7 @@ import type {
   BookSearchType,
   BookSearchParams,
   BookFilters,
+  BookSort,
 } from "../types/bookSearch";
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
 import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
@@ -89,6 +90,7 @@ export const searchBooks = async ({
   query,
   type,
   filters,
+  sort,
 }: BookSearchParams): Promise<Book[]> => {
   const normalizedQuery = query.trim();
 
@@ -100,15 +102,20 @@ export const searchBooks = async ({
     query: normalizedQuery,
     type,
     filters,
+    sort,
   });
-
-  console.log("Open Library request:", searchQuery);
 
   const params = new URLSearchParams({
     q: searchQuery,
     fields: BOOK_FIELDS,
     limit: DEFAULT_CATALOG_LIMIT.toString(),
   });
+
+  const apiSort = mapSortToOpenLibrary(sort);
+
+  if (apiSort) {
+    params.set("sort", apiSort);
+  }
 
   const response = await fetch(
     `${OPEN_LIBRARY_URL}/search.json?${params.toString()}`,
@@ -121,4 +128,16 @@ export const searchBooks = async ({
   const data: OpenLibrarySearchResponse = await response.json();
 
   return data.docs.map(mapOpenLibraryBook);
+};
+
+const mapSortToOpenLibrary = (sort: BookSort): string | undefined => {
+  switch (sort) {
+    case "newest":
+      return "new";
+    case "oldest":
+      return "old";
+    case "relevance":
+    default:
+      return undefined;
+  }
 };

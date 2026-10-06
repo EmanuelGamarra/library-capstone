@@ -15,6 +15,7 @@
 .titleGroup {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   gap: var(--spacing-sm);
 }
 
@@ -89,4 +90,41 @@
 .filterChip strong {
   margin-left: 4px;
   font-weight: 600;
+}
+
+.controlsRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  align-items: stretch;
+  gap: var(--spacing-lg);
+}
+
+.sortPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.sortTitle {
+  color: var(--color-text-primary);
+  font-size: 1.25rem;
+}
+
+.sortDescription {
+  margin-top: var(--spacing-xs);
+
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 700px) {
+  .controlsRow {
+    grid-template-columns: 1fr;
+  }
 }
