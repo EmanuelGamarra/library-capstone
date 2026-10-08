@@ -6,6 +6,7 @@ import styles from "./HomePage.module.css";
 import { useNavigate } from "react-router-dom";
 import type { BookSearchType } from "../types/bookSearch";
 import SearchBar from "../components/search/SearchBar";
+import CatalogState from "../components/common/CatalogState";
 
 function HomePage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -20,7 +21,7 @@ function HomePage() {
       type,
     });
 
-    navigate(`/search?${params.toString()}`);
+    navigate(`/catalog?${params.toString()}`);
   };
 
   useEffect(() => {
@@ -64,12 +65,28 @@ function HomePage() {
           Trending Books
         </h2>
 
-        {isLoading && <p className={styles.statusMessage}>Loading books...</p>}
+        {isLoading && (
+          <CatalogState
+            type="loading"
+            title="Loading books"
+            message="Please wait while we retrieve the catalog."
+          />
+        )}
 
-        {!isLoading && error && <p className={styles.statusMessage}>{error}</p>}
+        {!isLoading && error && (
+          <CatalogState
+            type="error"
+            title="We couldn't load the books"
+            message="Please try again later."
+          />
+        )}
 
         {!isLoading && !error && books.length === 0 && (
-          <p className={styles.statusMessage}>No books available.</p>
+          <CatalogState
+            type="empty"
+            title="No books available"
+            message="There are no trending books to display right now."
+          />
         )}
 
         {!isLoading && !error && books.length > 0 && <BookGrid books={books} />}

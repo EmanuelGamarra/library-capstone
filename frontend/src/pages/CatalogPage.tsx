@@ -7,7 +7,6 @@ import {
   type BookSearchType,
   type BookSort,
 } from "../types/bookSearch";
-import styles from "./SearchPage.module.css";
 import { useBookSearch } from "../hooks/useBookSearch";
 import FilterPanel from "../components/search/FilterPanel";
 import {
@@ -18,17 +17,23 @@ import {
 } from "../utils/bookSearchParams";
 import { useEffect, useMemo, useRef } from "react";
 import SortSelect from "../components/search/SortSelect";
-import { BOOKS_PER_PAGE, MAX_CATALOG_PAGES } from "../api/openLibraryApi";
+import {
+  BOOKS_PER_PAGE,
+  MAX_CATALOG_PAGES,
+  TRENDING_BOOKS_QUERY,
+} from "../api/openLibraryApi";
 import Pagination from "../components/search/Pagination";
+import CatalogState from "../components/common/CatalogState";
+import styles from "./CatalogPage.module.css";
 
-function SearchPage() {
+function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
+  const effectiveQuery = query || TRENDING_BOOKS_QUERY;
   const typeParam = searchParams.get("type");
 
-  const searchType: BookSearchType = isBookSearchType(typeParam)
-    ? typeParam
-    : "all";
+  const searchType: BookSearchType =
+    query && isBookSearchType(typeParam) ? typeParam : "all";
 
   const filters = useMemo(
     () => getBookFiltersFromSearchParams(searchParams),
@@ -39,8 +44,8 @@ function SearchPage() {
 
   const page = parsePageParam(searchParams.get("page"));
 
-  const { books, totalResults, isLoading, error } = useBookSearch({
-    query,
+  const { books, totalResults, isLoading, error, refetch } = useBookSearch({
+    query: effectiveQuery,
     type: searchType,
     filters,
     sort,
@@ -149,17 +154,13 @@ function SearchPage() {
     }
   }, [page, totalPages, isLoading, searchParams, setSearchParams]);
 
-  const displayedBooks = query ? books : [];
-
   return (
     <main className={styles.page}>
       <header className={styles.pageHeader}>
         <div className={styles.titleGroup}>
-          <h1 className={styles.title}>Search Books</h1>
+          <h1>Catalog</h1>
 
-          <p className={styles.subtitle}>
-            Search by title, author, or keywords.
-          </p>
+          <p>Browse, search, and discover books in the library.</p>
         </div>
 
         <SearchBar
@@ -217,50 +218,72 @@ function SearchPage() {
         )}
       </header>
 
-      {query && (
-        <section
-          ref={resultsRef}
-          className={styles.resultsSection}
-          aria-labelledby="search-results-heading"
-        >
-          <h2 id="search-results-heading" className={styles.resultsTitle}>
-            Results for “{query}”
-          </h2>
+      <section
+        ref={resultsRef}
+        className={styles.resultsSection}
+        aria-labelledby="catalog-results-heading"
+      >
+        <h2 id="catalog-results-heading" className={styles.resultsTitle}>
+          {query ? `Results for “${query}”` : "Browse Books"}
+        </h2>
 
-          {isLoading && (
-            <p className={styles.statusMessage}>Searching books...</p>
-          )}
+        {isLoading && (
+          <CatalogState
+            type="loading"
+            title="Loading books"
+            message="Please wait while we retrieve the catalog."
+          />
+        )}
 
-          {!isLoading && error && (
-            <p className={styles.statusMessage}>{error}</p>
-          )}
+        {!isLoading && error && (
+          <CatalogState
+            type="error"
+            title="We couldn't load the books"
+            message="Something went wrong while retrieving the catalog."
+            actionLabel="Try again"
+            onAction={refetch}
+          />
+        )}
 
-          {!isLoading && !error && displayedBooks.length === 0 && (
-            <p className={styles.statusMessage}>No books found.</p>
-          )}
+        {!isLoading && !error && books.length === 0 && (
+          <CatalogState
+            type="empty"
+            title="No books found"
+            message={
+              hasActiveBookFilters(filters)
+                ? "Try changing or clearing your filters."
+                : "Try a different search term."
+            }
+            actionLabel={
+              hasActiveBookFilters(filters) ? "Clear filters" : undefined
+            }
+            onAction={
+              hasActiveBookFilters(filters) ? handleClearFilters : undefined
+            }
+          />
+        )}
 
-          {!isLoading && !error && displayedBooks.length > 0 && (
-            <>
-              <BookGrid books={books} />
+        {!isLoading && !error && books.length > 0 && (
+          <>
+            <BookGrid books={books} />
 
-              <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
 
-              {actualTotalPages > MAX_CATALOG_PAGES && (
-                <p className={styles.paginationHint}>
-                  (Showing the first 100 pages. Refine your search or filters to
-                  narrow the results.)
-                </p>
-              )}
-            </>
-          )}
-        </section>
-      )}
+            {actualTotalPages > MAX_CATALOG_PAGES && (
+              <p className={styles.paginationHint}>
+                Showing the first {MAX_CATALOG_PAGES} pages. Refine your search
+                or filters to narrow the results.
+              </p>
+            )}
+          </>
+        )}
+      </section>
     </main>
   );
 }
 
-export default SearchPage;
+export default CatalogPage;

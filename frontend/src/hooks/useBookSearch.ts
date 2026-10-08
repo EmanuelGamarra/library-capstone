@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { searchBooks } from "../api/openLibraryApi";
 import type { Book } from "../types/book";
 import type {
@@ -20,6 +20,7 @@ interface UseBookSearchResult {
   totalResults: number;
   isLoading: boolean;
   error: string | null;
+  refetch: () => void;
 }
 
 export const useBookSearch = ({
@@ -33,6 +34,9 @@ export const useBookSearch = ({
   const [totalResults, setTotalResults] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const { subject, yearFrom, yearTo } = filters;
 
   useEffect(() => {
     if (!query) {
@@ -49,7 +53,11 @@ export const useBookSearch = ({
         const results = await searchBooks({
           query,
           type,
-          filters,
+          filters: {
+            subject,
+            yearFrom,
+            yearTo,
+          },
           sort,
           page,
         });
@@ -78,12 +86,17 @@ export const useBookSearch = ({
     return () => {
       isCurrentRequest = false;
     };
-  }, [query, type, filters, sort, page]);
+  }, [query, type, subject, yearFrom, yearTo, sort, page, retryCount]);
+
+  const refetch = useCallback(() => {
+    setRetryCount((current) => current + 1);
+  }, []);
 
   return {
     books,
     totalResults,
     isLoading,
     error,
+    refetch,
   };
 };
