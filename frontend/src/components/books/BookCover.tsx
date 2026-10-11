@@ -1,3 +1,4 @@
+import { useState } from "react";
 import styles from "./BookCover.module.css";
 
 interface BookCoverProps {
@@ -6,10 +7,24 @@ interface BookCoverProps {
 }
 
 function BookCover({ coverUrl, title }: BookCoverProps) {
-  if (!coverUrl) {
+  const [hasError, setHasError] = useState(false);
+
+  const coverInitial = title.trim().charAt(0).toUpperCase() || "?";
+
+  if (!coverUrl || hasError) {
     return (
-      <div className={styles.coverContainer}>
-        <div className={styles.coverFallback}>No cover available</div>
+      <div
+        className={styles.coverContainer}
+        role="img"
+        aria-label={`No cover available for ${title}`}
+      >
+        <div className={styles.coverFallback}>
+          <span className={styles.coverInitial} aria-hidden="true">
+            {coverInitial}
+          </span>
+
+          <span className={styles.fallbackText}>Cover unavailable</span>
+        </div>
       </div>
     );
   }
@@ -20,6 +35,8 @@ function BookCover({ coverUrl, title }: BookCoverProps) {
         className={styles.coverImage}
         src={coverUrl}
         alt={`Cover of ${title}`}
+        loading="lazy"
+        onError={() => setHasError(true)}
       />
     </div>
   );
