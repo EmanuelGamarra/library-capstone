@@ -128,7 +128,7 @@
   font-size: 0.875rem;
 }
 
-@media (max-width: 930px) {
+@media (max-width: 1195px) {
   .controlsRow {
     grid-template-columns: 1fr;
   }
