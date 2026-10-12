@@ -1,10 +1,12 @@
 .topBar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   min-width: 0;
   min-height: 76px;
   padding: var(--spacing-md) var(--spacing-lg);
+  gap: var(--spacing-md, 16px);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
@@ -18,6 +20,7 @@
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
+  cursor: pointer;
 }
 
 .menuButton span {
@@ -62,7 +65,6 @@
 .searchInput:focus-visible {
   position: relative;
   z-index: 1;
-
   outline: 3px solid var(--color-secondary);
   outline-offset: 1px;
 }
@@ -76,6 +78,7 @@
   border: 0;
   border-radius: 0 var(--radius-control) var(--radius-control) 0;
   font-weight: 600;
+  cursor: pointer;
 }
 
 .searchButton:hover {
@@ -99,6 +102,85 @@
   border: 0;
 }
 
+/* AUTH ACTIONS & USER PROFILE */
+.authActions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary, #0056b3);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.userName {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.authButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--color-border, #d9dee5);
+  border-radius: var(--radius-control, 6px);
+  background: transparent;
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+}
+
+.authButton:hover {
+  background-color: var(--color-surface-hover, #f1f3f5);
+}
+
+.authButtonPrimary {
+  background: var(--color-primary, #0056b3);
+  color: #ffffff;
+  border-color: transparent;
+}
+
+.authButtonPrimary:hover {
+  background: var(--color-accent, #003d82);
+}
+
+.authButton:focus-visible {
+  outline: 2px solid var(--color-secondary, #0056b3);
+  outline-offset: 2px;
+}
+
 @media (max-width: 700px) {
   .topBar {
     min-height: auto;
@@ -110,13 +192,18 @@
     display: block;
   }
 
-  .searchForm {
-    width: 100%;
+  .userName {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
   .searchButton {
     padding-inline: 14px;
+  }
+
+  .authButton {
+    padding: 8px 10px;
+    font-size: 13px;
   }
 }
