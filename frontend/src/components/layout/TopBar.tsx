@@ -1,6 +1,7 @@
 import { useState, type RefObject, type SyntheticEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styles from "./TopBar.module.css";
+import { useAuth } from "../../hooks/useAuth";
 
 interface TopBarProps {
   isMenuOpen: boolean;
@@ -8,7 +9,19 @@ interface TopBarProps {
   menuButtonRef: RefObject<HTMLButtonElement | null>;
 }
 
+function getInitials(name: string): string {
+  if (!name) return "U";
+  return name
+    .trim()
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function TopBar({ isMenuOpen, onMenuClick, menuButtonRef }: TopBarProps) {
+  const { user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -35,6 +48,11 @@ function TopBar({ isMenuOpen, onMenuClick, menuButtonRef }: TopBarProps) {
     setInputValue(null);
     navigate(`/catalog?${params.toString()}`);
   };
+
+  function handleLogout() {
+    logout();
+    navigate("/", { replace: true });
+  }
 
   return (
     <header className={styles.topBar}>
@@ -70,6 +88,41 @@ function TopBar({ isMenuOpen, onMenuClick, menuButtonRef }: TopBarProps) {
           Search
         </button>
       </form>
+
+      <div className={styles.authActions}>
+        {isLoading ? (
+          <div
+            className={styles.authButton}
+            style={{ opacity: 0.6, cursor: "wait" }}
+          >
+            Loading...
+          </div>
+        ) : user ? (
+          <>
+            <div className={styles.userInfo} title={user.name}>
+              <span className={styles.userAvatar} aria-hidden="true">
+                {getInitials(user.name)}
+              </span>
+              <span className={styles.userName}>{user.name}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className={styles.authButton}
+            >
+              Log out
+            </button>
+          </>
+        ) : (
+          <Link
+            to="/login"
+            className={`${styles.authButton} ${styles.authButtonPrimary}`}
+          >
+            Sign in
+          </Link>
+        )}
+      </div>
     </header>
   );
 }
