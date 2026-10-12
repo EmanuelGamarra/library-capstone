@@ -17,12 +17,16 @@ function BookCard({ book }: BookCardProps) {
 
   return (
     <Link className={styles.cardLink} to={`/books/${book.id}`}>
-      <BookCover coverUrl={book.coverUrl} title={book.title} />
+      <div className={styles.coverWrapper}>
+        <BookCover coverUrl={book.coverUrl} title={book.title} />
+      </div>
 
       <div className={styles.bookInfo}>
         <h3 className={styles.bookTitle}>{book.title}</h3>
 
-        <p className={styles.authors}>{authorText}</p>
+        <p className={styles.authors} title={authorText}>
+          {authorText}
+        </p>
 
         <p className={styles.publicationYear}>{publicationText}</p>
       </div>

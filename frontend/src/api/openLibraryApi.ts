@@ -10,6 +10,8 @@ import type { OpenLibrarySearchResponse } from "../types/openLibrary";
 import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
 
 const OPEN_LIBRARY_URL = "https://openlibrary.org";
+const OPEN_LIBRARY_MIN_QUERY_LENGTH = 3;
+export const TRENDING_BOOKS_QUERY = "trending_z_score:{0 TO *]";
 export const BOOKS_PER_PAGE = 12;
 export const MAX_CATALOG_PAGES = 100;
 
@@ -31,7 +33,9 @@ const buildTextQuery = (query: string, type: BookSearchType): string => {
 
     case "all":
     default:
-      return escapedQuery;
+      return escapedQuery.length < OPEN_LIBRARY_MIN_QUERY_LENGTH
+        ? `(${escapedQuery})`
+        : escapedQuery;
   }
 };
 
@@ -67,12 +71,14 @@ const buildSearchQuery = ({
   return [textQuery, ...filterClauses].join(" AND ");
 };
 
-export const getTrendingBooks = async (): Promise<Book[]> => {
+export const getTrendingBooks = async (
+  limit = BOOKS_PER_PAGE,
+): Promise<Book[]> => {
   const params = new URLSearchParams({
-    q: "trending_z_score:{0 TO *]",
+    q: TRENDING_BOOKS_QUERY,
     sort: "trending",
-    fields: "key,title,author_name,cover_i,first_publish_year",
-    limit: BOOKS_PER_PAGE.toString(),
+    fields: BOOK_FIELDS,
+    limit: limit.toString(),
   });
 
   const response = await fetch(
@@ -81,6 +87,29 @@ export const getTrendingBooks = async (): Promise<Book[]> => {
 
   if (!response.ok) {
     throw new Error("Failed to fetch trending books from Open Library");
+  }
+
+  const data: OpenLibrarySearchResponse = await response.json();
+
+  return data.docs.map(mapOpenLibraryBook);
+};
+
+export const getRecentlyAddedBooks = async (
+  limit = BOOKS_PER_PAGE,
+): Promise<Book[]> => {
+  const params = new URLSearchParams({
+    q: "*:*",
+    sort: "new",
+    fields: BOOK_FIELDS,
+    limit: limit.toString(),
+  });
+
+  const response = await fetch(
+    `${OPEN_LIBRARY_URL}/search.json?${params.toString()}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch recently added books from Open Library");
   }
 
   const data: OpenLibrarySearchResponse = await response.json();
