@@ -1,41 +1,145 @@
 # University Library SPA
 
-Final project for the Web Development course.
+A university library web application developed as the Capstone project for the Web Development course at Jala University.
 
-## Structure
+The application allows users to explore books through the Open Library API, search and filter the catalog, and authenticate through a secure JWT-based authentication system.
 
-- `frontend/` — React + TypeScript + Vite
-- `backend/` — Node.js + Express + JavaScript
-- PostgreSQL — local development database using Docker
+## Tech Stack
 
-## Development
+- **Frontend:** React, TypeScript, Vite, React Router, CSS Modules.
+- **Backend:** Node.js, Express, Sequelize.
+- **Database:** PostgreSQL (Docker for local development, Neon for production).
+- **Authentication:** JWT (HS256), Argon2id, React Context API.
+- **Testing:** Jest, React Testing Library, Node.js Test Runner.
+- **Deployment:** Vercel (frontend), Render (backend), Neon (database).
 
-### Frontend
+## Project Structure
+
+```text
+├── frontend/          # React SPA
+├── backend/           # Express REST API
+├── docker-compose.yml # Local PostgreSQL
+└── README.md
+```
+
+## Live Application & Repository
+
+- **Live Application:** https://librarycapstone-frontend.vercel.app
+- **Backend Health Check:** https://university-library-api.onrender.com/api/health
+- **GitLab Repository:** https://gitlab.com/jala-university1/cohort-3/ES.CO.CSWB-366.GA.T2.26.M2/SB/emanuel-gamarra/capstone-project-webdev
+
+## Local Development
+
+**Requirements:** Node.js 22+, npm, Docker and Docker Compose.
+
+Clone the repository and configure the environment variables using the provided `.env.example` files.
+
+### Database
+
+Start PostgreSQL from the project root:
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose up -d
 ```
 
 ### Backend
 
 ```bash
 cd backend
-npm install
+npm ci
+npm run db:migrate
 npm run dev
 ```
 
-The backend requires `CLIENT_URL` and a random `JWT_SECRET` of at least 32
-bytes. Generate a development secret, for example, with
-`openssl rand -base64 48`, and add it only to `backend/.env`.
+Configure `backend/.env` with the PostgreSQL connection variables, `CLIENT_URL`, and a random `JWT_SECRET` (at least 32 bytes of entropy).
 
-Authentication uses a one-hour HS256 JWT returned by `POST /api/auth/login`.
-Authenticated requests send it in the `Authorization: Bearer <token>` header.
-The future React authentication flow will keep the token in `sessionStorage`,
-remove it and clear `AuthContext` on logout, and discard it after a `401` from
-`GET /api/auth/me`.
+```
+PORT=PORT
 
-Logout is client-side because the backend does not keep sessions or a token
-revocation list. A copied JWT therefore remains valid until its one-hour
-expiration.
+# DB
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+
+# Client URL
+CLIENT_URL=http://localhost:5173
+
+# Authentication
+JWT_SECRET=
+```
+
+Generate a secret using:
+
+```bash
+openssl rand -hex 32
+```
+
+### Frontend
+
+In a separate terminal:
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Configure `frontend/.env` with:
+
+```env
+VITE_API_URL=http://localhost:3011/api
+```
+
+## Running Tests
+
+### Frontend — Jest & React Testing Library
+
+```bash
+cd frontend
+npm ci
+npm test
+```
+
+Tests cover three critical React components (`SearchBar`, `Pagination`, `BookCard`) and the `useBookSearch` custom hook, including mocked external dependencies.
+
+### Backend — Node.js Test Runner
+
+```bash
+cd backend
+npm ci
+npm test
+```
+
+Backend tests verify user registration, login, JWT generation, protected endpoint access, and rejection of invalid or expired tokens.
+
+Additional frontend validation:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+## Authentication Flow
+
+1. Users register through `POST /api/auth/register`. Passwords are hashed using Argon2id.
+2. Login is performed through `POST /api/auth/login`, which returns a signed HS256 JWT valid for one hour.
+3. The frontend stores the JWT in `sessionStorage` and manages authentication state through React Context API.
+4. Protected API requests include the `Authorization: Bearer <token>` header.
+5. `GET /api/auth/me` validates the token and retrieves the authenticated user.
+6. Protected routes restrict access to authenticated users.
+7. Logout clears the stored token and authentication state.
+
+Logout is client-side. Since the backend does not maintain a token revocation list, an issued JWT remains valid until expiration unless its signature or validity checks fail.
+
+## Deployment
+
+The frontend is deployed on Vercel, the backend on Render, and PostgreSQL is hosted on Neon.
+
+Production configuration uses environment variables for the database connection, JWT secret, CORS origin (`CLIENT_URL`), and API endpoint (`VITE_API_URL`).
+
+The deployed application has been manually verified through registration, login, authenticated requests, protected routes, logout, and catalog navigation.
+
+**Security:** Real environment files, credentials, and JWT secrets are excluded from the repository and submission.
