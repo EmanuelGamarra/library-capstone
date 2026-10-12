@@ -36,11 +36,21 @@ Clone the repository and configure the environment variables using the provided 
 
 ### Database
 
+Create a `.env` file in the project root to configure the local PostgreSQL container:
+
+```env
+POSTGRES_DB=library_db
+POSTGRES_USER=library_user
+POSTGRES_PASSWORD=your_local_password
+```
+
 Start PostgreSQL from the project root:
 
 ```bash
 docker compose up -d
 ```
+
+These credentials must match the corresponding database connection variables in `backend/.env`.
 
 ### Backend
 
@@ -53,21 +63,21 @@ npm run dev
 
 Configure `backend/.env` with the PostgreSQL connection variables, `CLIENT_URL`, and a random `JWT_SECRET` (at least 32 bytes of entropy).
 
-```
-PORT=PORT
+```dotenv
+PORT=3011
 
-# DB
-DB_HOST=
-DB_PORT=
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=library_db
+DB_USER=library_user
+DB_PASSWORD=your_local_password
 
 # Client URL
 CLIENT_URL=http://localhost:5173
 
 # Authentication
-JWT_SECRET=
+JWT_SECRET=your_generated_secret
 ```
 
 Generate a secret using:
