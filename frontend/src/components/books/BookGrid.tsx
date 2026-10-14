@@ -4,14 +4,15 @@ import styles from "./BookGrid.module.css";
 
 interface BookGridProps {
   books: Book[];
+  showBorrow?: boolean;
 }
 
-function BookGrid({ books }: BookGridProps) {
+function BookGrid({ books, showBorrow = false }: BookGridProps) {
   return (
     <ul className={styles.grid}>
       {books.map((book) => (
         <li className={styles.gridItem} key={book.id}>
-          <BookCard book={book} />
+          <BookCard book={book} showBorrow={showBorrow} />
         </li>
       ))}
     </ul>

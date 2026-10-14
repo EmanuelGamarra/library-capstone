@@ -6,12 +6,18 @@
 
   --color-background: #faf6ef;
   --color-surface: #ffffff;
+  --color-surface-subtle: #f8f9fa;
+  --color-surface-hover: #f1f3f5;
   --color-surface-muted: #e8e1d3;
 
   --color-text-primary: #111a26;
   --color-text-secondary: #5f6773;
+  --color-text-on-primary: #ffffff;
 
   --color-border: #d9dee5;
+  --color-overlay: rgba(17, 26, 38, 0.45);
+  --color-accent-ring: rgba(61, 90, 108, 0.12);
+  --color-primary-hover: #2c3b4c;
 
   /* Functional colors */
   --color-success-background: #e4efe1;

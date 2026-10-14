@@ -68,7 +68,7 @@ PORT=3011
 
 # Database
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=5433
 DB_NAME=library_db
 DB_USER=library_user
 DB_PASSWORD=your_local_password

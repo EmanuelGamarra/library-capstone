@@ -265,7 +265,7 @@ function CatalogPage() {
 
         {!isLoading && !error && books.length > 0 && (
           <>
-            <BookGrid books={books} />
+            <BookGrid books={books} showBorrow />
 
             <Pagination
               currentPage={page}
