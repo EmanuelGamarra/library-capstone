@@ -42,7 +42,7 @@
   align-self: center;
   margin-top: var(--spacing-sm);
   padding: 10px 18px;
-  color: #ffffff;
+  color: var(--color-text-on-primary);
   background: var(--color-primary);
   border: 0;
   border-radius: var(--radius-control);

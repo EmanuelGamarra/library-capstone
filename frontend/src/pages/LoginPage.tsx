@@ -9,6 +9,7 @@ export default function LoginPage() {
   const { login } = useAuth();
 
   const location = useLocation();
+  const sessionExpired = location.state?.sessionExpired === true;
 
   const from = location.state?.from;
 
@@ -59,6 +60,12 @@ export default function LoginPage() {
         {registrationSuccess && (
           <p className={styles.success} role="status">
             Account created successfully. You can now sign in.
+          </p>
+        )}
+
+        {sessionExpired && (
+          <p className={styles.error} role="alert">
+            Your session has expired. Please sign in again.
           </p>
         )}
 

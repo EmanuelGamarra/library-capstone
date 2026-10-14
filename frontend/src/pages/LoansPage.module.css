@@ -1,0 +1,233 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  width: 100%;
+  min-width: 0;
+  padding: var(--spacing-lg);
+}
+
+.header h1 {
+  margin: 0 0 8px;
+  color: var(--color-text-primary);
+}
+
+.header p,
+.sectionHeader p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.summaryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-height: 145px;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.summaryLabel {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.summaryValue {
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.summaryHint {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+}
+
+.loansSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 24px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.sectionHeader h2 {
+  margin: 0 0 8px;
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+}
+
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.table th {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.bookLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.active,
+.overdue {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.active {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.overdue {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.returnButton {
+  min-height: 40px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.returnButton:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+
+.returnButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.returnButton:focus-visible,
+.bookLink:focus-visible,
+.retryButton:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.empty {
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.empty h3 {
+  margin: 0 0 8px;
+}
+
+.empty p {
+  color: var(--color-text-secondary);
+}
+
+.empty a {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.success,
+.feedback {
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+}
+
+.success {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.feedback {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.feedback p {
+  margin: 0 0 8px;
+}
+
+.retryButton {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .page {
+    padding: var(--spacing-md);
+  }
+
+  .summaryCard {
+    padding: 18px;
+  }
+
+  .loansSection {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+}

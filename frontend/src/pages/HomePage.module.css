@@ -35,7 +35,7 @@
 
 .heroTitle {
   color: var(--color-text-primary);
-  font-family: "Lora", serif;
+  font-family: var(--font-heading);
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.05;
 }
@@ -74,7 +74,7 @@
 
 .sectionTitle {
   color: var(--color-text-primary);
-  font-family: "Lora", serif;
+  font-family: var(--font-heading);
   font-size: 1.75rem;
   line-height: 1.2;
 }

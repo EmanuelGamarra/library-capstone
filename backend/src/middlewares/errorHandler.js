@@ -2,7 +2,7 @@ export function errorHandler(err, req, res, next) {
   const statusCode =
     Number.isInteger(err.statusCode) &&
     err.statusCode >= 400 &&
-    err.statusCode < 500
+    err.statusCode < 600
       ? err.statusCode
       : 500;
 

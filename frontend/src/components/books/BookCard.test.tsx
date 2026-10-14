@@ -7,6 +7,11 @@ jest.mock("./BookCover", () => ({
   default: ({ title }: { title: string }) => <span>Cover: {title}</span>,
 }));
 
+jest.mock("./BookBorrowActions", () => ({
+  __esModule: true,
+  default: () => <div data-testid="borrow-actions" />,
+}));
+
 const book = {
   id: "OL123W",
   title: "Clean Code",
