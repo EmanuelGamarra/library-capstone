@@ -36,7 +36,11 @@ export default function LoginPage() {
 
     try {
       await login({ email: email.trim(), password });
-      navigate(redirectTo, { replace: true });
+
+      navigate(redirectTo, {
+        replace: true,
+        state: from?.state ?? null,
+      });
     } catch (err) {
       setError(
         err instanceof Error
