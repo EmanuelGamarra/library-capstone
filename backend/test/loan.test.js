@@ -17,13 +17,16 @@ let server;
 let sequelize;
 let Book;
 let Loan;
+let Reservation;
 let User;
 let originalTransaction;
 let originalBookMethods;
 let originalLoanMethods;
+let originalReservationMethods;
 let originalUserFindByPk;
 let books;
 let loans;
+let reservations;
 let externalRequest;
 
 function tokenFor(userId) {
@@ -98,6 +101,7 @@ function matchesWhere(record, where) {
 function installIsolatedModelState() {
   books = [];
   loans = [];
+  reservations = [];
   externalRequest = async () => new Response(null, { status: 200 });
 
   User.findByPk = async (id) =>
@@ -140,6 +144,10 @@ function installIsolatedModelState() {
         Book: books.find((book) => book.id === loan.bookId),
       }));
 
+  Reservation.findOne = async () => null;
+  Reservation.findAll = async () => reservations;
+  Reservation.count = async () => 0;
+
   sequelize.transaction = async (callback) =>
     callback({ LOCK: { UPDATE: "UPDATE" } });
 
@@ -158,12 +166,14 @@ before(async () => {
     { default: sequelize },
     { default: Book },
     { default: Loan },
+    { default: Reservation },
     { default: User },
   ] = await Promise.all([
     import("../src/app.js"),
     import("../src/config/database.js"),
     import("../src/models/Book.js"),
     import("../src/models/Loan.js"),
+    import("../src/models/Reservation.js"),
     import("../src/models/User.js"),
   ]);
 
@@ -180,6 +190,11 @@ before(async () => {
     findByPk: Loan.findByPk,
     findAll: Loan.findAll,
   };
+  originalReservationMethods = {
+    findOne: Reservation.findOne,
+    findAll: Reservation.findAll,
+    count: Reservation.count,
+  };
   originalUserFindByPk = User.findByPk;
 
   await new Promise((resolve) => {
@@ -191,6 +206,7 @@ before(async () => {
 afterEach(() => {
   Object.assign(Book, originalBookMethods);
   Object.assign(Loan, originalLoanMethods);
+  Object.assign(Reservation, originalReservationMethods);
   User.findByPk = originalUserFindByPk;
   sequelize.transaction = originalTransaction;
   globalThis.fetch = nativeFetch;
@@ -286,7 +302,9 @@ test("five users exhaust stock and a sixth receives a conflict", async () => {
   const sixth = await borrow(WORK_ID, userIds[5]);
 
   assert.equal(sixth.status, 409);
-  assert.deepEqual(await sixth.json(), { message: "No copies available" });
+  assert.deepEqual(await sixth.json(), {
+    message: "No copies available for borrowing",
+  });
   assert.equal(loans.filter((loan) => loan.returnedAt === null).length, 5);
 
   const availability = await request(`/api/books/${WORK_ID}/availability`);

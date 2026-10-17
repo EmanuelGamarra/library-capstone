@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import { getMyActiveLoans } from "../api/loanApi";
+import { getMyReservations } from "../api/reservationApi";
 import { AuthContext } from "../contexts/AuthContext";
 import { useBookSearch } from "../hooks/useBookSearch";
 import type { AuthContextValue } from "../contexts/AuthContext";
@@ -11,6 +12,10 @@ import CatalogPage from "./CatalogPage";
 
 jest.mock("../api/loanApi", () => ({
   getMyActiveLoans: jest.fn(),
+}));
+
+jest.mock("../api/reservationApi", () => ({
+  getMyReservations: jest.fn(),
 }));
 
 jest.mock("../api/authApi", () => ({
@@ -33,13 +38,18 @@ jest.mock("../components/books/BookGrid", () => ({
   default: ({
     borrowedIds,
     borrowedStatus,
+    onReservationRefresh,
   }: {
     borrowedIds?: ReadonlySet<string>;
     borrowedStatus?: string;
+    onReservationRefresh?: () => void;
   }) => (
     <div>
       <span>Ownership: {borrowedStatus}</span>
       <span>Borrowed: {[...(borrowedIds ?? [])].join(",") || "none"}</span>
+      <button type="button" onClick={onReservationRefresh}>
+        Refresh reservation state
+      </button>
     </div>
   ),
 }));
@@ -91,6 +101,9 @@ jest.mock("../components/common/CatalogState", () => ({
 
 const mockGetMyActiveLoans = getMyActiveLoans as jest.MockedFunction<
   typeof getMyActiveLoans
+>;
+const mockGetMyReservations = getMyReservations as jest.MockedFunction<
+  typeof getMyReservations
 >;
 const mockUseBookSearch = useBookSearch as jest.MockedFunction<
   typeof useBookSearch
@@ -172,11 +185,14 @@ test("catalog navigation does not refetch ownership, but a session change does",
         },
       ],
     })
+    .mockResolvedValueOnce({ loans: [] })
     .mockReturnValueOnce(secondSession.promise);
+  mockGetMyReservations.mockResolvedValue({ reservations: [] });
 
   const { rerender } = render(renderCatalog(authValue("token-1")));
 
   await waitFor(() => expect(mockGetMyActiveLoans).toHaveBeenCalledTimes(1));
+  expect(mockGetMyReservations).toHaveBeenCalledTimes(1);
   expect(await screen.findByText("Borrowed: OL1W")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "Change search" }));
@@ -185,10 +201,18 @@ test("catalog navigation does not refetch ownership, but a session change does",
   await user.click(screen.getByRole("button", { name: "Change page" }));
 
   expect(mockGetMyActiveLoans).toHaveBeenCalledTimes(1);
+  expect(mockGetMyReservations).toHaveBeenCalledTimes(1);
+
+  await user.click(
+    screen.getByRole("button", { name: "Refresh reservation state" }),
+  );
+  await waitFor(() => expect(mockGetMyActiveLoans).toHaveBeenCalledTimes(2));
+  expect(mockGetMyReservations).toHaveBeenCalledTimes(2);
 
   rerender(renderCatalog(authValue("token-2")));
 
-  await waitFor(() => expect(mockGetMyActiveLoans).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(mockGetMyActiveLoans).toHaveBeenCalledTimes(3));
+  expect(mockGetMyReservations).toHaveBeenCalledTimes(3);
   expect(screen.getByText("Ownership: loading")).toBeInTheDocument();
   expect(screen.getByText("Borrowed: none")).toBeInTheDocument();
 

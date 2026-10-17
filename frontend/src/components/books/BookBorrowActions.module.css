@@ -19,7 +19,6 @@
   padding: 10px 12px;
   border: 0;
   border-radius: var(--radius-control);
-  background: var(--color-primary);
   color: var(--color-text-on-primary);
   font: inherit;
   font-size: 0.875rem;
@@ -27,13 +26,59 @@
   cursor: pointer;
 }
 
-.borrowButton:hover:not(:disabled) {
-  background: var(--color-accent);
+.borrowActionButton {
+  background: var(--color-primary);
+}
+
+.borrowActionButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.reserveButton {
+  background: #285ea8;
+}
+
+.reserveButton:hover:not(:disabled) {
+  background: #1f4b87;
+}
+
+.readyButton {
+  background: #3f6b3f;
+}
+
+.readyButton:hover:not(:disabled) {
+  background: #315731;
+}
+
+.borrowedButton {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.pendingButton {
+  background: var(--color-warning-background);
+  color: var(--color-warning-text);
+}
+
+.loadingButton,
+.unavailableButton {
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+}
+
+.errorButton {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
 }
 
 .borrowButton:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.borrowActionButton:disabled,
+.reserveButton:disabled,
+.readyButton:disabled {
+  opacity: 0.65;
 }
 
 .borrowButton:focus-visible,

@@ -13,5 +13,7 @@ export async function getAvailability(req, res) {
 
   const availability = await getBookAvailability(openLibraryId);
 
+  res.set("Cache-Control", "no-store");
+
   return res.status(200).json(availability);
 }

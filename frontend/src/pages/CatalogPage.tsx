@@ -27,6 +27,8 @@ import Pagination from "../components/search/Pagination";
 import CatalogState from "../components/common/CatalogState";
 import { useAuth } from "../hooks/useAuth";
 import { useAuthErrorHandler } from "../hooks/useAuthErrorHandler";
+import { getMyReservations } from "../api/reservationApi";
+import type { Reservation } from "../types/reservation";
 import styles from "./CatalogPage.module.css";
 
 function CatalogPage() {
@@ -41,6 +43,10 @@ function CatalogPage() {
     string | null
   >(null);
   const [borrowedReloadKey, setBorrowedReloadKey] = useState(0);
+
+  const [reservationsByBook, setReservationsByBook] = useState<
+    Record<string, Reservation>
+  >({});
 
   const query = searchParams.get("q")?.trim() ?? "";
   const effectiveQuery = query || TRENDING_BOOKS_QUERY;
@@ -161,6 +167,19 @@ function CatalogPage() {
       next.add(openLibraryId);
       return next;
     });
+
+    setReservationsByBook((current) => {
+      const next = { ...current };
+      delete next[openLibraryId];
+      return next;
+    });
+  }
+
+  function handleReservationSuccess(reservation: Reservation) {
+    setReservationsByBook((previous) => ({
+      ...previous,
+      [reservation.openLibraryId]: reservation,
+    }));
   }
 
   useEffect(() => {
@@ -174,17 +193,34 @@ function CatalogPage() {
       setBorrowedStatus("loading");
 
       try {
-        const response = await getMyActiveLoans(token!);
+        const [loansResponse, reservationsResponse] = await Promise.all([
+          getMyActiveLoans(token!),
+          getMyReservations(token!),
+        ]);
 
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
 
-        setBorrowedIds(
-          new Set(
-            response.loans
-              .map((loan) => loan.openLibraryId)
-              .filter((id): id is string => Boolean(id)),
-          ),
+        const activeBookIds = new Set(
+          loansResponse.loans
+            .map((loan) => loan.openLibraryId)
+            .filter((id): id is string => Boolean(id)),
         );
+
+        const activeReservations: Record<string, Reservation> = {};
+
+        for (const reservation of reservationsResponse.reservations) {
+          if (
+            reservation.status === "PENDING" ||
+            reservation.status === "READY"
+          ) {
+            activeReservations[reservation.openLibraryId] = reservation;
+          }
+        }
+
+        setBorrowedIds(activeBookIds);
+        setReservationsByBook(activeReservations);
         setBorrowedSessionToken(token);
         setBorrowedStatus("ready");
       } catch (err) {
@@ -332,7 +368,7 @@ function CatalogPage() {
           <>
             {isAuthenticated && borrowedState === "error" && (
               <div role="alert">
-                <p>We couldn't verify your current loans.</p>
+                <p>We couldn't verify your loans and reservations.</p>
                 <button type="button" onClick={retryBorrowedBooks}>
                   Retry
                 </button>
@@ -354,7 +390,14 @@ function CatalogPage() {
                     ? borrowedState
                     : "ready"
               }
+              reservationsByBook={
+                isAuthenticated && borrowedSessionToken === token
+                  ? reservationsByBook
+                  : {}
+              }
               onBorrowSuccess={handleBorrowSuccess}
+              onReservationSuccess={handleReservationSuccess}
+              onReservationRefresh={retryBorrowedBooks}
             />
 
             <Pagination

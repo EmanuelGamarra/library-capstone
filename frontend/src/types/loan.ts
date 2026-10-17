@@ -2,6 +2,8 @@ export interface BookAvailability {
   openLibraryId: string;
   stock: number;
   activeLoans: number;
+  physicalAvailableCopies: number;
+  reservedCopies: number;
   availableCopies: number;
   isAvailable: boolean;
 }

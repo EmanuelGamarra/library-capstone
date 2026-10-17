@@ -1,4 +1,5 @@
 import type { Book } from "../../types/book";
+import type { Reservation } from "../../types/reservation";
 import { Link } from "react-router-dom";
 import BookCover from "./BookCover";
 import BookBorrowActions from "./BookBorrowActions";
@@ -9,7 +10,10 @@ interface BookCardProps {
   showBorrow?: boolean;
   alreadyBorrowed?: boolean;
   borrowedStatus?: "loading" | "ready" | "error";
+  reservation?: Reservation;
   onBorrowSuccess?: (openLibraryId: string) => void;
+  onReservationSuccess?: (reservation: Reservation) => void;
+  onReservationRefresh?: () => void;
 }
 
 function BookCard({
@@ -17,7 +21,10 @@ function BookCard({
   showBorrow = false,
   alreadyBorrowed = false,
   borrowedStatus = "ready",
+  reservation,
   onBorrowSuccess,
+  onReservationSuccess,
+  onReservationRefresh,
 }: BookCardProps) {
   const authorText =
     book.authors.length > 0 ? book.authors.join(", ") : "Unknown author";
@@ -47,7 +54,10 @@ function BookCard({
           openLibraryId={book.id}
           alreadyBorrowed={alreadyBorrowed}
           borrowedStatus={borrowedStatus}
+          reservation={reservation}
           onBorrowSuccess={onBorrowSuccess}
+          onReservationSuccess={onReservationSuccess}
+          onReservationRefresh={onReservationRefresh}
         />
       )}
     </article>
