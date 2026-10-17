@@ -2,8 +2,8 @@ import { API_URL } from "./config";
 import { ApiError } from "./authApi";
 
 import type {
-  ActiveLoansResponse,
   BorrowResponse,
+  LoansResponse,
   ReturnResponse,
 } from "../types/loan";
 
@@ -50,14 +50,22 @@ export async function returnBook(
   return handleLoanResponse<ReturnResponse>(response);
 }
 
-export async function getMyActiveLoans(
-  token: string,
-): Promise<ActiveLoansResponse> {
+export async function getMyActiveLoans(token: string): Promise<LoansResponse> {
   const response = await fetch(`${API_URL}/loans/me?status=active`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  return handleLoanResponse<ActiveLoansResponse>(response);
+  return handleLoanResponse<LoansResponse>(response);
+}
+
+export async function getMyLoans(token: string): Promise<LoansResponse> {
+  const response = await fetch(`${API_URL}/loans/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return handleLoanResponse<LoansResponse>(response);
 }

@@ -1,66 +1,64 @@
-import { useCallback, useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useAuthErrorHandler } from "../hooks/useAuthErrorHandler";
+import { Link } from "react-router-dom";
+import { getMyLoans, returnBook } from "../api/loanApi";
+import { getBookMetadata } from "../api/openLibraryApi";
 import { useAuth } from "../hooks/useAuth";
-import { getMyActiveLoans, returnBook } from "../api/loanApi";
 import type { Loan } from "../types/loan";
+import type { BookMetadata } from "../types/bookMetadata";
+import LoanTable from "../components/loans/LoanTable";
 import styles from "./LoansPage.module.css";
-import { ApiError } from "../api/authApi";
 
 const DUE_SOON_DAYS = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
+type MetadataMap = Record<string, BookMetadata>;
 
-function isDueSoon(loan: Loan, now: number) {
+function isDueSoon(loan: Loan, now: number): boolean {
   const remaining = new Date(loan.dueAt).getTime() - now;
 
   return remaining >= 0 && remaining <= DUE_SOON_DAYS * DAY_MS;
 }
 
 function LoansPage() {
-  const { token, logout } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { token } = useAuth();
+  const handleAuthError = useAuthErrorHandler();
+  const sessionContext = token;
+  const sessionContextRef = useRef(sessionContext);
+  const mountedRef = useRef(false);
+
+  useLayoutEffect(() => {
+    sessionContextRef.current = sessionContext;
+  }, [sessionContext]);
 
   const [loans, setLoans] = useState<Loan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isReturning, setIsReturning] = useState<string | null>(null);
+  const [metadataById, setMetadataById] = useState<MetadataMap>({});
+
+  const [isLoading, setIsLoading] = useState(() => Boolean(token));
+  const [returningRequest, setReturningRequest] = useState<{
+    loanId: string;
+    context: string;
+  } | null>(null);
+
   const [error, setError] = useState("");
+  const [returnError, setReturnError] = useState("");
   const [message, setMessage] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
   const [now] = useState(() => Date.now());
 
-  const handleExpiredSession = useCallback(
-    (error: unknown): boolean => {
-      if (!(error instanceof ApiError) || error.status !== 401) {
-        return false;
-      }
+  const returningId =
+    returningRequest?.context === sessionContext
+      ? returningRequest.loanId
+      : null;
 
-      logout();
+  useEffect(() => {
+    mountedRef.current = true;
 
-      navigate("/login", {
-        replace: true,
-        state: {
-          from: {
-            pathname: location.pathname,
-            search: location.search,
-            hash: location.hash,
-          },
-          sessionExpired: true,
-        },
-      });
-
-      return true;
-    },
-    [logout, navigate, location],
-  );
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -74,18 +72,49 @@ function LoansPage() {
       setError("");
 
       try {
-        const response = await getMyActiveLoans(token!);
+        const response = await getMyLoans(token!);
 
-        if (!cancelled) {
-          setLoans(response.loans);
+        if (cancelled) {
+          return;
         }
-      } catch (err) {
-        if (!cancelled) {
-          if (!handleExpiredSession(err)) {
-            setError("Unable to load your loans.");
+
+        setLoans(response.loans);
+        setIsLoading(false);
+
+        const ids = [
+          ...new Set(
+            response.loans
+              .map((loan) => loan.openLibraryId)
+              .filter((id): id is string => Boolean(id)),
+          ),
+        ];
+
+        const results = await Promise.allSettled(
+          ids.map((id) => getBookMetadata(id)),
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        const metadata: MetadataMap = {};
+
+        results.forEach((result) => {
+          if (result.status === "fulfilled") {
+            metadata[result.value.openLibraryId] = result.value;
           }
+        });
+
+        setMetadataById(metadata);
+      } catch (err) {
+        if (cancelled) {
+          return;
         }
-      } finally {
+
+        if (!handleAuthError(err)) {
+          setError("Unable to load your loans.");
+        }
+
         if (!cancelled) {
           setIsLoading(false);
         }
@@ -97,160 +126,167 @@ function LoansPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, reloadKey, handleExpiredSession]);
+  }, [token, reloadKey, handleAuthError]);
 
   async function handleReturn(loanId: string) {
-    if (!token || isReturning) {
-      return;
-    }
+    if (!token || returningId) return;
 
-    setIsReturning(loanId);
-    setError("");
+    const requestContext = token;
+
+    setReturningRequest({ loanId, context: requestContext });
+    setReturnError("");
     setMessage("");
 
     try {
-      await returnBook(loanId, token);
+      const response = await returnBook(loanId, token);
 
-      setLoans((previous) => previous.filter((loan) => loan.id !== loanId));
+      if (!mountedRef.current || sessionContextRef.current !== requestContext) {
+        return;
+      }
+
+      setLoans((previous) =>
+        previous.map((loan) =>
+          loan.id === loanId
+            ? {
+                ...loan,
+                returnedAt: response.loan.returnedAt,
+                status: "RETURNED",
+              }
+            : loan,
+        ),
+      );
 
       setMessage("Book returned successfully.");
     } catch (err) {
-      if (!handleExpiredSession(err)) {
-        setError(
+      if (!mountedRef.current || sessionContextRef.current !== requestContext) {
+        return;
+      }
+
+      if (!handleAuthError(err)) {
+        setReturnError(
           err instanceof Error ? err.message : "Unable to return this book.",
         );
       }
     } finally {
-      setIsReturning(null);
+      if (mountedRef.current && sessionContextRef.current === requestContext) {
+        setReturningRequest(null);
+      }
     }
   }
 
-  const dueSoonCount = loans.filter((loan) => isDueSoon(loan, now)).length;
+  const currentLoans = loans.filter((loan) => loan.returnedAt === null);
+
+  const loanHistory = loans.filter((loan) => loan.returnedAt !== null);
+
+  const dueSoonCount = currentLoans.filter((loan) =>
+    isDueSoon(loan, now),
+  ).length;
+
+  const summaryValue = (value: number) => (isLoading || error ? "—" : value);
 
   return (
     <main className={styles.page}>
       <header className={styles.header}>
         <h1>My Loans</h1>
-        <p>Here's an overview of your library borrowing activity.</p>
+        <p>Manage your current loans and review your borrowing history.</p>
       </header>
 
       <section className={styles.summaryGrid} aria-label="Loan summary">
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Current Borrowed</span>
           <strong className={styles.summaryValue}>
-            {isLoading || error ? "—" : loans.length}
+            {summaryValue(currentLoans.length)}
           </strong>
         </div>
 
         <div className={styles.summaryCard}>
           <span className={styles.summaryLabel}>Due Soon</span>
           <strong className={styles.summaryValue}>
-            {isLoading || error ? "—" : dueSoonCount}
+            {summaryValue(dueSoonCount)}
           </strong>
           <span className={styles.summaryHint}>Within the next 3 days</span>
         </div>
       </section>
 
-      <section
-        className={styles.loansSection}
-        aria-labelledby="borrowed-books-heading"
-      >
-        <div className={styles.sectionHeader}>
-          <h2 id="borrowed-books-heading">My Borrowed Books</h2>
-          <p>Books you currently have on loan.</p>
+      {returnError && (
+        <p className={styles.feedback} role="alert">
+          {returnError}
+        </p>
+      )}
+
+      {message && (
+        <p className={styles.success} role="status">
+          {message}
+        </p>
+      )}
+
+      {error && (
+        <div className={styles.feedback} role="alert">
+          <p>{error}</p>
+          <button
+            type="button"
+            className={styles.retryButton}
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
+            Try again
+          </button>
         </div>
+      )}
 
-        {message && (
-          <p className={styles.success} role="status">
-            {message}
-          </p>
-        )}
+      {isLoading ? (
+        <p role="status">Loading your loans...</p>
+      ) : !error ? (
+        <>
+          <section
+            className={styles.loansSection}
+            aria-labelledby="current-loans-heading"
+          >
+            <div className={styles.sectionHeader}>
+              <h2 id="current-loans-heading">Current Loans</h2>
+              <p>Books you have not returned yet.</p>
+            </div>
 
-        {error && (
-          <div className={styles.feedback} role="alert">
-            <p>{error}</p>
-            <button
-              type="button"
-              className={styles.retryButton}
-              onClick={() => setReloadKey((key) => key + 1)}
-            >
-              Try again
-            </button>
-          </div>
-        )}
+            {currentLoans.length === 0 ? (
+              <div className={styles.empty}>
+                <h3>No current loans</h3>
+                <p>Explore the catalog to borrow a book.</p>
+                <Link to="/catalog">Browse catalog</Link>
+              </div>
+            ) : (
+              <LoanTable
+                loans={currentLoans}
+                metadataById={metadataById}
+                now={now}
+                returningId={returningId}
+                onReturn={(id) => void handleReturn(id)}
+              />
+            )}
+          </section>
 
-        {isLoading ? (
-          <p role="status">Loading your loans...</p>
-        ) : error ? null : loans.length === 0 ? (
-          <div className={styles.empty}>
-            <h3>No active loans</h3>
-            <p>Explore the catalog to borrow your first book.</p>
-            <Link to="/catalog">Browse catalog</Link>
-          </div>
-        ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th scope="col">Book</th>
-                  <th scope="col">Borrow Date</th>
-                  <th scope="col">Due Date</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
+          <section
+            className={styles.loansSection}
+            aria-labelledby="loan-history-heading"
+          >
+            <div className={styles.sectionHeader}>
+              <h2 id="loan-history-heading">Loan History</h2>
+              <p>Your previously returned books.</p>
+            </div>
 
-              <tbody>
-                {loans.map((loan) => {
-                  const overdue = new Date(loan.dueAt).getTime() < now;
-
-                  const bookIdentifier = loan.openLibraryId ?? loan.bookId;
-
-                  return (
-                    <tr key={loan.id}>
-                      <td>
-                        {loan.openLibraryId ? (
-                          <Link
-                            className={styles.bookLink}
-                            to={`/books/${loan.openLibraryId}`}
-                          >
-                            {bookIdentifier}
-                          </Link>
-                        ) : (
-                          bookIdentifier
-                        )}
-                      </td>
-
-                      <td>{formatDate(loan.borrowedAt)}</td>
-                      <td>{formatDate(loan.dueAt)}</td>
-
-                      <td>
-                        <span
-                          className={overdue ? styles.overdue : styles.active}
-                        >
-                          {overdue ? "Overdue" : "Active"}
-                        </span>
-                      </td>
-
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.returnButton}
-                          onClick={() => void handleReturn(loan.id)}
-                          disabled={isReturning !== null}
-                          aria-label={`Return book ${bookIdentifier}`}
-                        >
-                          {isReturning === loan.id ? "Returning..." : "Return"}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+            {loanHistory.length === 0 ? (
+              <div className={styles.empty}>
+                <h3>No loan history yet</h3>
+                <p>Returned books will appear here.</p>
+              </div>
+            ) : (
+              <LoanTable
+                loans={loanHistory}
+                metadataById={metadataById}
+                now={now}
+              />
+            )}
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }

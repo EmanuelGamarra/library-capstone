@@ -135,12 +135,15 @@ export async function returnBook(userId, loanId) {
   });
 }
 
-export async function getMyActiveLoans(userId) {
+export async function getMyLoans(userId, status) {
+  const where = { userId };
+
+  if (status === "active") {
+    where.returnedAt = null;
+  }
+
   const loans = await Loan.findAll({
-    where: {
-      userId,
-      returnedAt: null,
-    },
+    where,
     include: [
       {
         model: Book,
@@ -150,6 +153,8 @@ export async function getMyActiveLoans(userId) {
     order: [["borrowedAt", "DESC"]],
   });
 
+  const now = new Date();
+
   return {
     loans: loans.map((loan) => ({
       id: loan.id,
@@ -158,7 +163,12 @@ export async function getMyActiveLoans(userId) {
       borrowedAt: loan.borrowedAt,
       dueAt: loan.dueAt,
       returnedAt: loan.returnedAt,
-      status: loan.dueAt < new Date() ? "OVERDUE" : "ACTIVE",
+      status:
+        loan.returnedAt !== null
+          ? "RETURNED"
+          : loan.dueAt < now
+            ? "OVERDUE"
+            : "ACTIVE",
     })),
   };
 }
