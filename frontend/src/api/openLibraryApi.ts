@@ -9,6 +9,11 @@ import type {
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
 import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
 import type { BookMetadata } from "../types/bookMetadata";
+import type { BookDetail } from "../types/bookDetail";
+import type {
+  OpenLibraryWorkDetail,
+  OpenLibraryAuthorDetail,
+} from "../types/openLibrary";
 
 const OPEN_LIBRARY_URL = "https://openlibrary.org";
 const OPEN_LIBRARY_MIN_QUERY_LENGTH = 3;
@@ -238,5 +243,83 @@ export async function getBookMetadata(
     title: work.title,
     author,
     coverUrl,
+  };
+}
+
+export async function getBookDetails(
+  openLibraryId: string,
+  signal?: AbortSignal,
+): Promise<BookDetail> {
+  const workResponse = await fetch(
+    `${OPEN_LIBRARY_URL}/works/${encodeURIComponent(openLibraryId)}.json`,
+    { signal },
+  );
+
+  if (workResponse.status === 404) {
+    throw new Error("Book not found.");
+  }
+
+  if (!workResponse.ok) {
+    throw new Error("Unable to load book details.");
+  }
+
+  const work: OpenLibraryWorkDetail = await workResponse.json();
+
+  const authorKeys = [
+    ...new Set(
+      (work.authors ?? [])
+        .map((entry) => entry.author?.key)
+        .filter((key): key is string => Boolean(key)),
+    ),
+  ];
+
+  const authorResults = await Promise.allSettled(
+    authorKeys.map(async (key) => {
+      const response = await fetch(`${OPEN_LIBRARY_URL}${key}.json`, {
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to load author.");
+      }
+
+      const author: OpenLibraryAuthorDetail = await response.json();
+      return author.name?.trim() || null;
+    }),
+  );
+
+  if (signal?.aborted) {
+    throw new DOMException("Request aborted", "AbortError");
+  }
+
+  const authors = authorResults.flatMap((result) =>
+    result.status === "fulfilled" && result.value ? [result.value] : [],
+  );
+
+  const description =
+    typeof work.description === "string"
+      ? work.description
+      : (work.description?.value ?? null);
+
+  const coverId = work.covers?.find((id) => Number.isInteger(id) && id > 0);
+
+  const yearMatch = work.first_publish_date?.match(
+    /\b(1[5-9]\d{2}|20\d{2}|21\d{2})\b/,
+  );
+
+  return {
+    id: openLibraryId,
+    title: work.title,
+    authors,
+    coverUrl: coverId
+      ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+      : null,
+    description: description?.trim() || null,
+    firstPublishYear: yearMatch ? Number(yearMatch[1]) : null,
+    subjects: Array.isArray(work.subjects)
+      ? work.subjects
+          .filter((subject): subject is string => typeof subject === "string")
+          .slice(0, 6)
+      : [],
   };
 }

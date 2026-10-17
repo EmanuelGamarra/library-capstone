@@ -251,6 +251,30 @@ test("unavailable physical stock can be reserved and becomes pending", async () 
   ).toBeDisabled();
 });
 
+test("a user can reserve when the remaining physical copy belongs to a READY reservation", async () => {
+  const user = userEvent.setup();
+  mockGetBookAvailability.mockResolvedValue({
+    ...availability,
+    activeLoans: 4,
+    physicalAvailableCopies: 1,
+    reservedCopies: 1,
+    availableCopies: 0,
+    isAvailable: false,
+  });
+  mockCreateReservation.mockResolvedValue({
+    reservation: pendingReservation,
+  });
+
+  renderActions(authValue());
+
+  await user.click(await screen.findByRole("button", { name: "Reserve book" }));
+
+  expect(mockCreateReservation).toHaveBeenCalledWith("OL1W", "token-1");
+  expect(await screen.findByRole("status")).toHaveTextContent(
+    "Reservation created successfully.",
+  );
+});
+
 test("READY owner can borrow when the reserved copy is not publicly available", async () => {
   const user = userEvent.setup();
   const onBorrowSuccess = jest.fn();

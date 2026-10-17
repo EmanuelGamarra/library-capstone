@@ -144,7 +144,10 @@ export async function createReservation(userId, openLibraryId) {
       throw reservationError("Book not found", 404);
     }
 
-    await reconcileReservationsForBook(lockedBook, transaction);
+    const inventory = await reconcileReservationsForBook(
+      lockedBook,
+      transaction,
+    );
 
     const existingReservation = await Reservation.findOne({
       where: {
@@ -182,15 +185,7 @@ export async function createReservation(userId, openLibraryId) {
       };
     }
 
-    const activeLoans = await Loan.count({
-      where: {
-        bookId: lockedBook.id,
-        returnedAt: null,
-      },
-      transaction,
-    });
-
-    if (activeLoans < lockedBook.stock) {
+    if (inventory.freeCopies > 0) {
       return {
         error: reservationError(
           "Copies are available; borrow the book instead",

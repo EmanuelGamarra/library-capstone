@@ -4,7 +4,7 @@ import BookGrid from "../components/books/BookGrid";
 import type { Book } from "../types/book";
 import styles from "./HomePage.module.css";
 import CatalogState from "../components/common/CatalogState";
-import homeDiscoveryHero from "../assets/home-discovery-hero.png";
+import homeDiscoveryHero from "../assets/home-discovery-hero.webp";
 import { Link } from "react-router-dom";
 
 const HOME_SECTION_BOOK_LIMIT = 4;

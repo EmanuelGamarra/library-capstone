@@ -1,6 +1,6 @@
 import type { Book } from "../../types/book";
 import type { Reservation } from "../../types/reservation";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import BookCover from "./BookCover";
 import BookBorrowActions from "./BookBorrowActions";
 import styles from "./BookCard.module.css";
@@ -26,6 +26,8 @@ function BookCard({
   onReservationSuccess,
   onReservationRefresh,
 }: BookCardProps) {
+  const location = useLocation();
+  const returnTo = `${location.pathname}${location.search}${location.hash}`;
   const authorText =
     book.authors.length > 0 ? book.authors.join(", ") : "Unknown author";
 
@@ -35,7 +37,11 @@ function BookCard({
 
   return (
     <article className={styles.card}>
-      <Link className={styles.cardLink} to={`/books/${book.id}`}>
+      <Link
+        className={styles.cardLink}
+        to={`/books/${book.id}`}
+        state={{ returnTo }}
+      >
         <div className={styles.coverWrapper}>
           <BookCover coverUrl={book.coverUrl} title={book.title} />
         </div>

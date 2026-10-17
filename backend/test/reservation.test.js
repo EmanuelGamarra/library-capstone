@@ -241,6 +241,32 @@ test("reservation creation rejects active loans and duplicate active reservation
   );
 });
 
+test("reservation creation joins the queue when every free copy is already READY", async () => {
+  const book = addBook({ stock: 5 });
+
+  for (const userId of users.slice(0, 4)) {
+    addLoan({ userId, bookId: book.id });
+  }
+
+  addReservation({
+    userId: users[4],
+    bookId: book.id,
+    status: STATUS.READY,
+    createdAt: new Date("2026-10-01T00:00:00.000Z"),
+    readyAt: new Date("2099-01-01T00:00:00.000Z"),
+    expiresAt: new Date("2099-01-03T00:00:00.000Z"),
+  });
+
+  const created = await createReservation(users[5], WORK_ID);
+
+  assert.equal(created.reservation.status, STATUS.PENDING);
+  assert.equal(
+    reservations.filter((reservation) => reservation.status === STATUS.READY)
+      .length,
+    1,
+  );
+});
+
 test("returns promote pending reservations in FIFO order without overallocating stock", async () => {
   const book = addBook({ stock: 2 });
   const firstLoan = addLoan({ userId: users[0], bookId: book.id });
@@ -374,7 +400,8 @@ test("expired READY persists and promotes the next reservation even when Borrow 
 });
 
 test("a rejected reservation request still persists lazy expiration reconciliation", async () => {
-  const book = addBook();
+  const book = addBook({ stock: 2 });
+  addLoan({ userId: users[2], bookId: book.id });
   const expired = addReservation({
     userId: users[0],
     bookId: book.id,
@@ -392,7 +419,9 @@ test("a rejected reservation request still persists lazy expiration reconciliati
 
   await assert.rejects(
     createReservation(users[2], WORK_ID),
-    (error) => error.statusCode === 409,
+    (error) =>
+      error.statusCode === 409 &&
+      error.message === "You already have an active loan for this book",
   );
 
   assert.equal(expired.status, STATUS.EXPIRED);

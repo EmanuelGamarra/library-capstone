@@ -63,11 +63,11 @@ function BookBorrowActions({
 
   const hasFreeCopies = availability?.isAvailable === true;
 
-  const allCopiesBorrowed =
-    availability !== null && availability.physicalAvailableCopies === 0;
+  const noCopiesAvailable =
+    availability !== null && availability.availableCopies === 0;
 
   const shouldReserve =
-    allCopiesBorrowed &&
+    noCopiesAvailable &&
     !reservationPending &&
     !reservationReady &&
     !borrowed &&
