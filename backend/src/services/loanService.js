@@ -1,7 +1,9 @@
 import sequelize from "../config/database.js";
 import Book from "../models/Book.js";
 import Loan from "../models/Loan.js";
-import { DEFAULT_BOOK_STOCK } from "./bookService.js";
+import Reservation, { RESERVATION_STATUS } from "../models/Reservation.js";
+import { DEFAULT_BOOK_STOCK } from "../constants/bookConstants.js";
+import { reconcileReservationsForBook } from "./reservationService.js";
 import { verifyOpenLibraryWork } from "./openLibraryService.js";
 
 const LOAN_DURATION_DAYS = 14;
@@ -34,7 +36,7 @@ async function resolveBook(openLibraryId) {
 export async function borrowBook(userId, openLibraryId) {
   const book = await resolveBook(openLibraryId);
 
-  return sequelize.transaction(async (transaction) => {
+  const outcome = await sequelize.transaction(async (transaction) => {
     const lockedBook = await Book.findByPk(book.id, {
       transaction,
       lock: transaction.LOCK.UPDATE,
@@ -43,6 +45,11 @@ export async function borrowBook(userId, openLibraryId) {
     if (!lockedBook) {
       throw loanError("Book not found", 404);
     }
+
+    const inventory = await reconcileReservationsForBook(
+      lockedBook,
+      transaction,
+    );
 
     const existingLoan = await Loan.findOne({
       where: {
@@ -54,19 +61,24 @@ export async function borrowBook(userId, openLibraryId) {
     });
 
     if (existingLoan) {
-      throw loanError("You already have an active loan for this book", 409);
+      return {
+        error: loanError("You already have an active loan for this book", 409),
+      };
     }
 
-    const activeLoans = await Loan.count({
+    const readyReservation = await Reservation.findOne({
       where: {
+        userId,
         bookId: lockedBook.id,
-        returnedAt: null,
+        status: RESERVATION_STATUS.READY,
       },
       transaction,
     });
 
-    if (activeLoans >= lockedBook.stock) {
-      throw loanError("No copies available", 409);
+    if (!readyReservation && inventory.freeCopies <= 0) {
+      return {
+        error: loanError("No copies available for borrowing", 409),
+      };
     }
 
     const borrowedAt = new Date();
@@ -85,6 +97,33 @@ export async function borrowBook(userId, openLibraryId) {
       { transaction },
     );
 
+    if (readyReservation) {
+      readyReservation.status = RESERVATION_STATUS.FULFILLED;
+      readyReservation.fulfilledAt = borrowedAt;
+      await readyReservation.save({ transaction });
+    }
+
+    const activeLoans = await Loan.count({
+      where: {
+        bookId: lockedBook.id,
+        returnedAt: null,
+      },
+      transaction,
+    });
+
+    const readyCount = await Reservation.count({
+      where: {
+        bookId: lockedBook.id,
+        status: RESERVATION_STATUS.READY,
+      },
+      transaction,
+    });
+
+    const availableCopies = Math.max(
+      0,
+      lockedBook.stock - activeLoans - readyCount,
+    );
+
     return {
       loan: {
         id: loan.id,
@@ -95,13 +134,38 @@ export async function borrowBook(userId, openLibraryId) {
         returnedAt: loan.returnedAt,
         status: "ACTIVE",
       },
-      availableCopies: lockedBook.stock - activeLoans - 1,
+      availableCopies,
     };
   });
+
+  if (outcome.error) {
+    throw outcome.error;
+  }
+
+  return outcome;
 }
 
 export async function returnBook(userId, loanId) {
+  const existingLoan = await Loan.findByPk(loanId);
+
+  if (!existingLoan) {
+    throw loanError("Loan not found", 404);
+  }
+
+  if (existingLoan.userId !== userId) {
+    throw loanError("You cannot return another user's loan", 403);
+  }
+
   return sequelize.transaction(async (transaction) => {
+    const book = await Book.findByPk(existingLoan.bookId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!book) {
+      throw loanError("Book not found", 404);
+    }
+
     const loan = await Loan.findByPk(loanId, {
       transaction,
       lock: transaction.LOCK.UPDATE,
@@ -121,6 +185,8 @@ export async function returnBook(userId, loanId) {
 
     loan.returnedAt = new Date();
     await loan.save({ transaction });
+
+    await reconcileReservationsForBook(book, transaction);
 
     return {
       loan: {

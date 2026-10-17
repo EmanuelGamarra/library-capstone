@@ -5,6 +5,7 @@ import healthRoutes from "./routes/healthRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import bookRoutes from "./routes/bookRoutes.js";
 import loanRoutes from "./routes/loanRoutes.js";
+import reservationRoutes from "./routes/reservationRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
@@ -21,6 +22,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/loans", loanRoutes);
+app.use("/api/reservations", reservationRoutes);
 
 app.use(errorHandler);
 
