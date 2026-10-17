@@ -10,6 +10,7 @@ import { getMyActiveLoans } from "../api/loanApi";
 import { getMyReservations } from "../api/reservationApi";
 import type { Reservation } from "../types/reservation";
 import BookBorrowActions from "../components/books/BookBorrowActions";
+import ReadingTracker from "../components/books/ReadingTracker";
 import styles from "./BookDetailPage.module.css";
 
 function BookDetailPage() {
@@ -20,6 +21,8 @@ function BookDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryKey, setRetryKey] = useState(0);
+
+  const [readingRefreshKey, setReadingRefreshKey] = useState(0);
 
   const { token, isAuthenticated } = useAuth();
   const handleAuthError = useAuthErrorHandler();
@@ -169,6 +172,8 @@ function BookDetailPage() {
         reservation: undefined,
       };
     });
+
+    setReadingRefreshKey((value) => value + 1);
   }
 
   function handleReservationSuccess(reservation: Reservation) {
@@ -307,6 +312,11 @@ function BookDetailPage() {
                     </button>
                   )}
               </div>
+
+              <ReadingTracker
+                key={`${book.id}:${token ?? "anonymous"}:${readingRefreshKey}`}
+                openLibraryId={book.id}
+              />
 
               <button
                 type="button"
