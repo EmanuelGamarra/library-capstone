@@ -1,0 +1,128 @@
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.table {
+  width: 100%;
+  min-width: 650px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.table th {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.bookLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.active,
+.overdue {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.active {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.overdue {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.returnButton {
+  min-height: 40px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-control);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.returnButton:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+
+.returnButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.returnButton:focus-visible,
+.bookLink:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.bookCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.bookCover {
+  flex: 0 0 48px;
+  width: 48px;
+}
+
+.bookDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bookDetails strong,
+.bookLink {
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.bookAuthor {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.returned {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

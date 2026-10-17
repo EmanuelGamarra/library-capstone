@@ -7,9 +7,18 @@ import styles from "./BookCard.module.css";
 interface BookCardProps {
   book: Book;
   showBorrow?: boolean;
+  alreadyBorrowed?: boolean;
+  borrowedStatus?: "loading" | "ready" | "error";
+  onBorrowSuccess?: (openLibraryId: string) => void;
 }
 
-function BookCard({ book, showBorrow = false }: BookCardProps) {
+function BookCard({
+  book,
+  showBorrow = false,
+  alreadyBorrowed = false,
+  borrowedStatus = "ready",
+  onBorrowSuccess,
+}: BookCardProps) {
   const authorText =
     book.authors.length > 0 ? book.authors.join(", ") : "Unknown author";
 
@@ -33,7 +42,14 @@ function BookCard({ book, showBorrow = false }: BookCardProps) {
         </div>
       </Link>
 
-      {showBorrow && <BookBorrowActions openLibraryId={book.id} />}
+      {showBorrow && (
+        <BookBorrowActions
+          openLibraryId={book.id}
+          alreadyBorrowed={alreadyBorrowed}
+          borrowedStatus={borrowedStatus}
+          onBorrowSuccess={onBorrowSuccess}
+        />
+      )}
     </article>
   );
 }

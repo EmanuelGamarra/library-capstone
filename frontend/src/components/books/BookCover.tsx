@@ -4,17 +4,27 @@ import styles from "./BookCover.module.css";
 interface BookCoverProps {
   coverUrl: string | null;
   title: string;
+  fallbackVariant?: "default" | "compact";
 }
 
-function BookCover({ coverUrl, title }: BookCoverProps) {
+function BookCover({
+  coverUrl,
+  title,
+  fallbackVariant = "default",
+}: BookCoverProps) {
   const [hasError, setHasError] = useState(false);
 
   const coverInitial = title.trim().charAt(0).toUpperCase() || "?";
 
   if (!coverUrl || hasError) {
+    const containerClassName =
+      fallbackVariant === "compact"
+        ? `${styles.coverContainer} ${styles.compactFallbackContainer}`
+        : styles.coverContainer;
+
     return (
       <div
-        className={styles.coverContainer}
+        className={containerClassName}
         role="img"
         aria-label={`No cover available for ${title}`}
       >
@@ -23,7 +33,9 @@ function BookCover({ coverUrl, title }: BookCoverProps) {
             {coverInitial}
           </span>
 
-          <span className={styles.fallbackText}>Cover unavailable</span>
+          {fallbackVariant === "default" && (
+            <span className={styles.fallbackText}>Cover unavailable</span>
+          )}
         </div>
       </div>
     );

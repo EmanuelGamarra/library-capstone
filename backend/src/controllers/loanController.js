@@ -1,8 +1,4 @@
-import {
-  borrowBook,
-  returnBook,
-  getMyActiveLoans,
-} from "../services/loanService.js";
+import { borrowBook, returnBook, getMyLoans } from "../services/loanService.js";
 import { borrowBookSchema } from "../validators/loanValidator.js";
 import { validate as isUuid } from "uuid";
 
@@ -35,13 +31,15 @@ export async function returnLoan(req, res) {
 }
 
 export async function listMyLoans(req, res) {
-  if (req.query.status !== "active") {
+  const { status } = req.query;
+
+  if (status !== undefined && status !== "active") {
     return res.status(400).json({
-      message: "Only status=active is supported",
+      message: "Invalid loan status filter",
     });
   }
 
-  const result = await getMyActiveLoans(req.user.id);
+  const result = await getMyLoans(req.user.id, status);
 
   return res.status(200).json(result);
 }

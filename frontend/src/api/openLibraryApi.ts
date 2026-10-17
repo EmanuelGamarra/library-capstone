@@ -8,6 +8,7 @@ import type {
 } from "../types/bookSearch";
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
 import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
+import type { BookMetadata } from "../types/bookMetadata";
 
 const OPEN_LIBRARY_URL = "https://openlibrary.org";
 const OPEN_LIBRARY_MIN_QUERY_LENGTH = 3;
@@ -181,3 +182,61 @@ const mapSortToOpenLibrary = (sort: BookSort): string | undefined => {
       return undefined;
   }
 };
+
+interface OpenLibraryWork {
+  title: string;
+  covers?: number[];
+  authors?: {
+    author: {
+      key: string;
+    };
+  }[];
+}
+
+interface OpenLibraryAuthor {
+  name: string;
+}
+
+export async function getBookMetadata(
+  openLibraryId: string,
+): Promise<BookMetadata> {
+  const response = await fetch(
+    `${OPEN_LIBRARY_URL}/works/${encodeURIComponent(openLibraryId)}.json`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Unable to load book metadata");
+  }
+
+  const work: OpenLibraryWork = await response.json();
+  const coverId = work.covers?.find((id) => id > 0);
+  const coverUrl = coverId
+    ? `https://covers.openlibrary.org/b/id/${coverId}-S.jpg`
+    : null;
+
+  let author: string | null = null;
+  const authorKey = work.authors?.[0]?.author?.key;
+
+  if (authorKey) {
+    try {
+      const authorResponse = await fetch(
+        `${OPEN_LIBRARY_URL}${authorKey}.json`,
+      );
+
+      if (authorResponse.ok) {
+        const authorData: OpenLibraryAuthor = await authorResponse.json();
+
+        author = authorData.name;
+      }
+    } catch {
+      // Author metadata
+    }
+  }
+
+  return {
+    openLibraryId,
+    title: work.title,
+    author,
+    coverUrl,
+  };
+}

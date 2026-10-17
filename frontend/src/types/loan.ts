@@ -27,6 +27,6 @@ export interface ReturnResponse {
   loan: Loan;
 }
 
-export interface ActiveLoansResponse {
+export interface LoansResponse {
   loans: Loan[];
 }
