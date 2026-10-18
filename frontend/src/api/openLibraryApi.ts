@@ -7,7 +7,7 @@ import type {
   BookSearchResult,
 } from "../types/bookSearch";
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
-import { mapOpenLibraryBook } from "../utils/mapOpenLibraryBook";
+import { mapValidOpenLibraryBooks } from "../utils/mapOpenLibraryBook";
 import type { BookMetadata } from "../types/bookMetadata";
 import type { BookDetail } from "../types/bookDetail";
 import type {
@@ -22,6 +22,8 @@ export const BOOKS_PER_PAGE = 12;
 export const MAX_CATALOG_PAGES = 100;
 
 const BOOK_FIELDS = "key,title,author_name,cover_i,first_publish_year";
+const MAX_SEARCH_BATCH_SIZE = 1000;
+const MAX_SEARCH_REQUESTS = 4;
 
 const escapeQueryValue = (value: string): string => {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -97,17 +99,19 @@ export const getTrendingBooks = async (
 
   const data: OpenLibrarySearchResponse = await response.json();
 
-  return data.docs.map(mapOpenLibraryBook);
+  return mapValidOpenLibraryBooks(data.docs);
 };
 
 export const getRecentlyAddedBooks = async (
   limit = BOOKS_PER_PAGE,
 ): Promise<Book[]> => {
+  const fetchLimit = Math.max(limit * 2, BOOKS_PER_PAGE);
+  const currentYear = new Date().getFullYear();
   const params = new URLSearchParams({
-    q: "*:*",
+    q: `first_publish_year:[1000 TO ${currentYear}]`,
     sort: "new",
     fields: BOOK_FIELDS,
-    limit: limit.toString(),
+    limit: fetchLimit.toString(),
   });
 
   const response = await fetch(
@@ -120,7 +124,7 @@ export const getRecentlyAddedBooks = async (
 
   const data: OpenLibrarySearchResponse = await response.json();
 
-  return data.docs.map(mapOpenLibraryBook);
+  return mapValidOpenLibraryBooks(data.docs).slice(0, limit);
 };
 
 export const searchBooks = async ({
@@ -150,8 +154,6 @@ export const searchBooks = async ({
   const params = new URLSearchParams({
     q: searchQuery,
     fields: BOOK_FIELDS,
-    limit: BOOKS_PER_PAGE.toString(),
-    page: page.toString(),
   });
 
   const apiSort = mapSortToOpenLibrary(sort);
@@ -160,19 +162,48 @@ export const searchBooks = async ({
     params.set("sort", apiSort);
   }
 
-  const response = await fetch(
-    `${OPEN_LIBRARY_URL}/search.json?${params.toString()}`,
-  );
+  const pageStart = (page - 1) * BOOKS_PER_PAGE;
+  const pageEnd = pageStart + BOOKS_PER_PAGE;
+  const validBooks: Book[] = [];
+  let offset = 0;
+  let totalResults = 0;
 
-  if (!response.ok) {
-    throw new Error("Failed to search books in Open Library");
+  for (
+    let requestCount = 0;
+    requestCount < MAX_SEARCH_REQUESTS && validBooks.length < pageEnd;
+    requestCount += 1
+  ) {
+    const remaining = pageEnd - validBooks.length;
+    const requestLimit = Math.min(
+      Math.max(remaining + BOOKS_PER_PAGE, BOOKS_PER_PAGE * 2),
+      MAX_SEARCH_BATCH_SIZE,
+    );
+
+    params.set("limit", requestLimit.toString());
+    params.set("offset", offset.toString());
+
+    const response = await fetch(
+      `${OPEN_LIBRARY_URL}/search.json?${params.toString()}`,
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to search books in Open Library");
+    }
+
+    const data: OpenLibrarySearchResponse = await response.json();
+
+    totalResults = data.num_found;
+    validBooks.push(...mapValidOpenLibraryBooks(data.docs));
+    offset += data.docs.length;
+
+    if (data.docs.length === 0 || offset >= totalResults) {
+      break;
+    }
   }
 
-  const data: OpenLibrarySearchResponse = await response.json();
-
   return {
-    books: data.docs.map(mapOpenLibraryBook),
-    totalResults: data.num_found,
+    books: validBooks.slice(pageStart, pageEnd),
+    totalResults,
   };
 };
 
