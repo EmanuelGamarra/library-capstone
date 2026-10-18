@@ -11,6 +11,7 @@ import { getMyReservations } from "../api/reservationApi";
 import type { Reservation } from "../types/reservation";
 import BookBorrowActions from "../components/books/BookBorrowActions";
 import ReadingTracker from "../components/books/ReadingTracker";
+import WishlistButton from "../components/books/WishlistButton";
 import styles from "./BookDetailPage.module.css";
 
 function BookDetailPage() {
@@ -34,13 +35,19 @@ function BookDetailPage() {
   const returnTo =
     typeof navigationState?.returnTo === "string" &&
     (navigationState.returnTo === "/" ||
+      navigationState.returnTo === "/wishlist" ||
       navigationState.returnTo.startsWith("/catalog?") ||
       navigationState.returnTo.startsWith("/catalog#") ||
       navigationState.returnTo === "/catalog")
       ? navigationState.returnTo
       : "/catalog";
 
-  const backLabel = returnTo === "/" ? "Back to Home" : "Back to Catalog";
+  const backLabel =
+    returnTo === "/"
+      ? "Back to Home"
+      : returnTo === "/wishlist"
+        ? "Back to Wishlist"
+        : "Back to Catalog";
 
   const [ownership, setOwnership] = useState<{
     token: string;
@@ -318,14 +325,10 @@ function BookDetailPage() {
                 openLibraryId={book.id}
               />
 
-              <button
-                type="button"
-                className={styles.wishlistPlaceholder}
-                disabled
-                title="Wishlist functionality is coming soon"
-              >
-                Add to Wishlist — Coming soon
-              </button>
+              <WishlistButton
+                key={`${book.id}:${token ?? "anonymous"}`}
+                openLibraryId={book.id}
+              />
             </div>
           </section>
 

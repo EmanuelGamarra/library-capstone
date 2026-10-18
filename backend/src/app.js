@@ -8,6 +8,7 @@ import loanRoutes from "./routes/loanRoutes.js";
 import reservationRoutes from "./routes/reservationRoutes.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import readingStatusRoutes from "./routes/readingStatusRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/loans", loanRoutes);
 app.use("/api/reading-status", readingStatusRoutes);
 app.use("/api/reservations", reservationRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 app.use(errorHandler);
 
