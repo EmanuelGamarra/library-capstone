@@ -1,0 +1,121 @@
+.page {
+  width: min(calc(100% - 32px), 1200px);
+  margin: 0 auto;
+  padding: var(--spacing-lg) 0 var(--spacing-xxxl);
+}
+
+.header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.header h1 {
+  color: var(--color-text-primary);
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.header p {
+  margin-top: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: var(--spacing-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gridItem {
+  min-width: 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xxxl) var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  text-align: center;
+}
+
+.emptyState h2 {
+  color: var(--color-text-primary);
+  font-size: 1.5rem;
+}
+
+.emptyState p {
+  color: var(--color-text-secondary);
+}
+
+.catalogLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.catalogLink:hover {
+  background: var(--color-primary-hover);
+}
+
+.catalogLink:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.ownershipNotice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-danger-text);
+  font-size: 0.875rem;
+}
+
+.ownershipNotice button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ownershipNotice button:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+@media (min-width: 768px) {
+  .page {
+    width: min(calc(100% - 48px), 1200px);
+    padding-top: var(--spacing-xl);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid {
+    gap: var(--spacing-md);
+  }
+}

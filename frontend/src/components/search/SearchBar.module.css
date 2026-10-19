@@ -19,7 +19,7 @@
   border-color: var(--color-accent);
   box-shadow:
     var(--shadow-card),
-    0 0 0 2px rgba(61, 90, 108, 0.12);
+    0 0 0 2px var(--color-accent-ring);
 }
 
 .searchInput {
@@ -55,7 +55,7 @@
   min-width: 112px;
   margin-left: 6px;
   padding: 12px 22px;
-  color: #ffffff;
+  color: var(--color-text-on-primary);
   background: var(--color-primary);
   border: 0;
   border-radius: var(--radius-control);

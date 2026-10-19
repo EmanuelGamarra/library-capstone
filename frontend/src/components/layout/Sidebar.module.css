@@ -55,14 +55,14 @@
   color: var(--color-primary);
   background: var(--color-surface-muted);
   border-radius: var(--radius-control);
-  font-family: "Lora", serif;
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 600;
 }
 
 .brandName {
   color: var(--color-text-primary);
-  font-family: "Lora", serif;
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 600;
 }

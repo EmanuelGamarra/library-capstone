@@ -6,7 +6,7 @@
   min-width: 0;
   min-height: 76px;
   padding: var(--spacing-md) var(--spacing-lg);
-  gap: var(--spacing-md, 16px);
+  gap: var(--spacing-md);
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
 }
@@ -29,7 +29,7 @@
   height: 2px;
   margin: 4px 0;
   background: var(--color-primary);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .menuButton:focus-visible {
@@ -73,7 +73,7 @@
   flex: 0 0 auto;
   min-height: 44px;
   padding: 10px 18px;
-  color: #ffffff;
+  color: var(--color-text-on-primary);
   background: var(--color-primary);
   border: 0;
   border-radius: 0 var(--radius-control) var(--radius-control) 0;
@@ -124,8 +124,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--color-primary, #0056b3);
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
   font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
@@ -148,8 +148,8 @@
   justify-content: center;
   min-height: 40px;
   padding: 8px 16px;
-  border: 1px solid var(--color-border, #d9dee5);
-  border-radius: var(--radius-control, 6px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--color-text-primary);
   font: inherit;
@@ -163,21 +163,21 @@
 }
 
 .authButton:hover {
-  background-color: var(--color-surface-hover, #f1f3f5);
+  background-color: var(--color-surface-hover);
 }
 
 .authButtonPrimary {
-  background: var(--color-primary, #0056b3);
-  color: #ffffff;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
   border-color: transparent;
 }
 
 .authButtonPrimary:hover {
-  background: var(--color-accent, #003d82);
+  background: var(--color-accent);
 }
 
 .authButton:focus-visible {
-  outline: 2px solid var(--color-secondary, #0056b3);
+  outline: 2px solid var(--color-secondary);
   outline-offset: 2px;
 }
 

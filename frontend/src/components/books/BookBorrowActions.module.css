@@ -1,0 +1,114 @@
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border);
+}
+
+.availability {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.borrowButton {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-control);
+  color: var(--color-text-on-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.borrowActionButton {
+  background: var(--color-primary);
+}
+
+.borrowActionButton:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.reserveButton {
+  background: #285ea8;
+}
+
+.reserveButton:hover:not(:disabled) {
+  background: #1f4b87;
+}
+
+.readyButton {
+  background: #3f6b3f;
+}
+
+.readyButton:hover:not(:disabled) {
+  background: #315731;
+}
+
+.borrowedButton {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.pendingButton {
+  background: var(--color-warning-background);
+  color: var(--color-warning-text);
+}
+
+.loadingButton,
+.unavailableButton {
+  background: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+}
+
+.errorButton {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.borrowButton:disabled {
+  cursor: not-allowed;
+}
+
+.borrowActionButton:disabled,
+.reserveButton:disabled,
+.readyButton:disabled {
+  opacity: 0.65;
+}
+
+.borrowButton:focus-visible,
+.retryButton:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.retryButton {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.success,
+.error {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.success {
+  color: var(--color-success-text);
+}
+
+.error {
+  color: var(--color-danger-text);
+}

@@ -1,0 +1,198 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.sectionTitle {
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+  min-height: 170px;
+  padding: var(--spacing-base);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card h3 {
+  color: var(--color-text-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.bookLink {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bookLink:hover strong {
+  text-decoration: underline;
+}
+
+.cover {
+  width: 76px;
+  flex-shrink: 0;
+}
+
+.bookInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.bookInfo strong {
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.bookInfo span,
+.muted {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.overdue {
+  color: var(--color-danger-text) !important;
+  font-weight: 600;
+}
+
+.dueSoon {
+  color: var(--color-warning-text) !important;
+  font-weight: 600;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.empty a {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: auto;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  padding: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  text-decoration: none;
+}
+
+.stat + .stat {
+  border-left: 1px solid var(--color-border);
+}
+
+.stat strong {
+  color: var(--color-primary);
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.stat span {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.stat:hover span {
+  text-decoration: underline;
+}
+
+.bookLink:focus-visible,
+.stat:focus-visible,
+.empty a:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  color: var(--color-danger-text);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.errorState button {
+  min-height: 40px;
+  padding: var(--spacing-xs) 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.errorState button:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 650px) {
+  .sectionTitle {
+    font-size: 1.4rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card:last-child {
+    grid-column: auto;
+  }
+}

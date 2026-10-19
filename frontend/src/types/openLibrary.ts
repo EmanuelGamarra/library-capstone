@@ -11,3 +11,22 @@ export interface OpenLibrarySearchResponse {
   start: number;
   docs: OpenLibraryBookDocument[];
 }
+
+export interface OpenLibraryWorkAuthor {
+  author?: {
+    key: string;
+  };
+}
+
+export interface OpenLibraryWorkDetail {
+  title: string;
+  description?: string | { value: string };
+  covers?: number[];
+  authors?: OpenLibraryWorkAuthor[];
+  first_publish_date?: string;
+  subjects?: string[];
+}
+
+export interface OpenLibraryAuthorDetail {
+  name?: string;
+}

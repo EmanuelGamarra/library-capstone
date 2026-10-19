@@ -15,19 +15,39 @@ import {
   parseBookSort,
   parsePageParam,
 } from "../utils/bookSearchParams";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import SortSelect from "../components/search/SortSelect";
 import {
   BOOKS_PER_PAGE,
   MAX_CATALOG_PAGES,
   TRENDING_BOOKS_QUERY,
 } from "../api/openLibraryApi";
+import { getMyActiveLoans } from "../api/loanApi";
 import Pagination from "../components/search/Pagination";
 import CatalogState from "../components/common/CatalogState";
+import { useAuth } from "../hooks/useAuth";
+import { useAuthErrorHandler } from "../hooks/useAuthErrorHandler";
+import { getMyReservations } from "../api/reservationApi";
+import type { Reservation } from "../types/reservation";
 import styles from "./CatalogPage.module.css";
 
 function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { token, isAuthenticated } = useAuth();
+  const handleAuthError = useAuthErrorHandler();
+  const [borrowedIds, setBorrowedIds] = useState<Set<string>>(new Set());
+  const [borrowedState, setBorrowedStatus] = useState<
+    "loading" | "ready" | "error"
+  >("loading");
+  const [borrowedSessionToken, setBorrowedSessionToken] = useState<
+    string | null
+  >(null);
+  const [borrowedReloadKey, setBorrowedReloadKey] = useState(0);
+
+  const [reservationsByBook, setReservationsByBook] = useState<
+    Record<string, Reservation>
+  >({});
+
   const query = searchParams.get("q")?.trim() ?? "";
   const effectiveQuery = query || TRENDING_BOOKS_QUERY;
   const typeParam = searchParams.get("type");
@@ -135,6 +155,87 @@ function CatalogPage() {
 
     resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  function retryBorrowedBooks() {
+    setBorrowedStatus("loading");
+    setBorrowedReloadKey((value) => value + 1);
+  }
+
+  function handleBorrowSuccess(openLibraryId: string) {
+    setBorrowedIds((current) => {
+      const next = new Set(current);
+      next.add(openLibraryId);
+      return next;
+    });
+
+    setReservationsByBook((current) => {
+      const next = { ...current };
+      delete next[openLibraryId];
+      return next;
+    });
+  }
+
+  function handleReservationSuccess(reservation: Reservation) {
+    setReservationsByBook((previous) => ({
+      ...previous,
+      [reservation.openLibraryId]: reservation,
+    }));
+  }
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadBorrowedBooks() {
+      setBorrowedStatus("loading");
+
+      try {
+        const [loansResponse, reservationsResponse] = await Promise.all([
+          getMyActiveLoans(token!),
+          getMyReservations(token!),
+        ]);
+
+        if (cancelled) {
+          return;
+        }
+
+        const activeBookIds = new Set(
+          loansResponse.loans
+            .map((loan) => loan.openLibraryId)
+            .filter((id): id is string => Boolean(id)),
+        );
+
+        const activeReservations: Record<string, Reservation> = {};
+
+        for (const reservation of reservationsResponse.reservations) {
+          if (
+            reservation.status === "PENDING" ||
+            reservation.status === "READY"
+          ) {
+            activeReservations[reservation.openLibraryId] = reservation;
+          }
+        }
+
+        setBorrowedIds(activeBookIds);
+        setReservationsByBook(activeReservations);
+        setBorrowedSessionToken(token);
+        setBorrowedStatus("ready");
+      } catch (err) {
+        if (!cancelled && !handleAuthError(err)) {
+          setBorrowedStatus("error");
+        }
+      }
+    }
+
+    void loadBorrowedBooks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, isAuthenticated, borrowedReloadKey, handleAuthError]);
 
   useEffect(() => {
     if (isLoading || totalPages === 0) {
@@ -265,7 +366,39 @@ function CatalogPage() {
 
         {!isLoading && !error && books.length > 0 && (
           <>
-            <BookGrid books={books} />
+            {isAuthenticated && borrowedState === "error" && (
+              <div role="alert">
+                <p>We couldn't verify your loans and reservations.</p>
+                <button type="button" onClick={retryBorrowedBooks}>
+                  Retry
+                </button>
+              </div>
+            )}
+
+            <BookGrid
+              books={books}
+              showBorrow
+              borrowedIds={
+                isAuthenticated && borrowedSessionToken === token
+                  ? borrowedIds
+                  : undefined
+              }
+              borrowedStatus={
+                isAuthenticated && borrowedSessionToken !== token
+                  ? "loading"
+                  : isAuthenticated
+                    ? borrowedState
+                    : "ready"
+              }
+              reservationsByBook={
+                isAuthenticated && borrowedSessionToken === token
+                  ? reservationsByBook
+                  : {}
+              }
+              onBorrowSuccess={handleBorrowSuccess}
+              onReservationSuccess={handleReservationSuccess}
+              onReservationRefresh={retryBorrowedBooks}
+            />
 
             <Pagination
               currentPage={page}

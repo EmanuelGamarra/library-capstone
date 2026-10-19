@@ -1,0 +1,156 @@
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+.table th {
+  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.bookCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.bookCover {
+  width: 48px;
+  flex: 0 0 48px;
+}
+
+.bookDetails {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bookLink {
+  color: var(--color-primary);
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  overflow-wrap: anywhere;
+}
+
+.bookAuthor {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.status {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ready {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.pending {
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+}
+
+.fulfilled {
+  background: var(--color-success-background);
+  color: var(--color-success-text);
+}
+
+.cancelled {
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+
+.expired {
+  background: var(--color-danger-background);
+  color: var(--color-danger-text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.borrowButton,
+.cancelButton {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: var(--radius-control);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.borrowButton {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid var(--color-secondary);
+  color: var(--color-primary);
+}
+
+.borrowButton:hover:not(:disabled) {
+  background: var(--color-accent);
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+
+.borrowButton:disabled,
+.cancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.borrowButton:focus-visible,
+.cancelButton:focus-visible,
+.bookLink:focus-visible,
+.tableWrapper:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.noAction {
+  color: var(--color-text-secondary);
+}

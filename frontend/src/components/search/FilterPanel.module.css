@@ -71,7 +71,7 @@
   min-height: 44px;
   padding: 10px 20px;
 
-  color: #ffffff;
+  color: var(--color-text-on-primary);
   background: var(--color-primary);
 
   border: 0;

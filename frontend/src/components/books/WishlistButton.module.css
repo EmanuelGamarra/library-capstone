@@ -1,0 +1,86 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.button,
+.loginLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--spacing-sm) var(--spacing-base);
+  border: 1px solid var(--color-secondary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.button {
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled),
+.loginLink:hover {
+  background: var(--color-surface-hover);
+}
+
+.saved {
+  background: var(--color-surface-muted);
+}
+
+.button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.button:focus-visible,
+.loginLink:focus-visible,
+.retryButton:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.loginLink {
+  text-decoration: none;
+}
+
+.feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+.error,
+.success {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.error {
+  color: var(--color-danger-text);
+}
+
+.success {
+  color: var(--color-success-text);
+}
+
+.retryButton {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: var(--spacing-xs) 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
