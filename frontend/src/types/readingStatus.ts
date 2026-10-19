@@ -10,3 +10,7 @@ export interface ReadingStatusResponse {
   readingStatus: ReadingStatusRecord | null;
   canEdit: boolean;
 }
+
+export interface BooksByReadingStatusResponse {
+  items: ReadingStatusRecord[];
+}

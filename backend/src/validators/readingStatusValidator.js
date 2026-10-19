@@ -10,3 +10,9 @@ export const readingStatusParamsSchema = z.strictObject({
 export const updateReadingStatusSchema = z.strictObject({
   status: z.enum([READING_STATUS.READING, READING_STATUS.COMPLETED]),
 });
+
+export const readingStatusQuerySchema = z.strictObject({
+  status: z
+    .enum([READING_STATUS.READING, READING_STATUS.COMPLETED])
+    .default(READING_STATUS.READING),
+});

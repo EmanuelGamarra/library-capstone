@@ -2,14 +2,18 @@ import { useEffect, useState } from "react";
 import { getRecentlyAddedBooks, getTrendingBooks } from "../api/openLibraryApi";
 import BookGrid from "../components/books/BookGrid";
 import type { Book } from "../types/book";
-import styles from "./HomePage.module.css";
 import CatalogState from "../components/common/CatalogState";
 import homeDiscoveryHero from "../assets/home-discovery-hero.webp";
 import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import LibraryActivitySection from "../components/home/LibraryActivitySection";
+import styles from "./HomePage.module.css";
 
 const HOME_SECTION_BOOK_LIMIT = 4;
 
 function HomePage() {
+  const { token, isAuthenticated } = useAuth();
+
   const [trendingBooks, setTrendingBooks] = useState<Book[]>([]);
   const [recentBooks, setRecentBooks] = useState<Book[]>([]);
 
@@ -166,6 +170,8 @@ function HomePage() {
           <BookGrid books={recentBooks} />
         )}
       </section>
+
+      {isAuthenticated && token && <LibraryActivitySection key={token} />}
     </main>
   );
 }
