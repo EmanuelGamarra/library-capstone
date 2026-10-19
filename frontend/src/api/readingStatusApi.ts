@@ -1,13 +1,12 @@
 import { API_URL } from "./config";
 import { ApiError } from "./authApi";
 import type {
+  BooksByReadingStatusResponse,
   ReadingStatus,
   ReadingStatusResponse,
 } from "../types/readingStatus";
 
-async function handleReadingStatusResponse(
-  response: Response,
-): Promise<ReadingStatusResponse> {
+async function handleReadingStatusResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
 
@@ -17,7 +16,7 @@ async function handleReadingStatusResponse(
     );
   }
 
-  return response.json() as Promise<ReadingStatusResponse>;
+  return response.json() as Promise<T>;
 }
 
 export async function getReadingStatus(
@@ -36,7 +35,7 @@ export async function getReadingStatus(
     },
   );
 
-  return handleReadingStatusResponse(response);
+  return handleReadingStatusResponse<ReadingStatusResponse>(response);
 }
 
 export async function updateReadingStatus(
@@ -57,5 +56,22 @@ export async function updateReadingStatus(
     },
   );
 
-  return handleReadingStatusResponse(response);
+  return handleReadingStatusResponse<ReadingStatusResponse>(response);
+}
+
+export async function getMyBooksByReadingStatus(
+  status: ReadingStatus,
+  token: string,
+  signal?: AbortSignal,
+): Promise<BooksByReadingStatusResponse> {
+  const params = new URLSearchParams({ status });
+  const response = await fetch(`${API_URL}/reading-status?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+    signal,
+  });
+
+  return handleReadingStatusResponse<BooksByReadingStatusResponse>(response);
 }

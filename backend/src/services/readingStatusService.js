@@ -114,3 +114,30 @@ export async function updateReadingStatus(userId, openLibraryId, status) {
     };
   });
 }
+
+export async function getMyBooksByReadingStatus(userId, status) {
+  const records = await ReadingStatus.findAll({
+    where: {
+      userId,
+      status,
+    },
+    include: [
+      {
+        model: Book,
+        attributes: ["openLibraryId"],
+      },
+    ],
+    order: [
+      ["updatedAt", "DESC"],
+      ["id", "DESC"],
+    ],
+  });
+
+  return {
+    items: records.map((record) => ({
+      openLibraryId: record.Book.openLibraryId,
+      status: record.status,
+      updatedAt: record.updatedAt,
+    })),
+  };
+}
