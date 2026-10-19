@@ -1,94 +1,173 @@
-# University Library SPA
+# University Library - LibraryApp
 
-A university library web application developed as the Capstone project for the Web Development course at Jala University.
+**University Library Management Web Application**  
+Web Development Capstone · Jala University
 
-The application allows users to explore books through the Open Library API, search and filter the catalog, and authenticate through a secure JWT-based authentication system.
+A full-stack web application for discovering books and managing personal library activity. LibraryApp combines bibliographic information from the public **Open Library API** with library-specific data stored in **PostgreSQL**, including authenticated users, inventory, loans, reservations, reading statuses, and wishlists.
 
-## Tech Stack
+## Live application and source code
 
-- **Frontend:** React, TypeScript, Vite, React Router, CSS Modules.
-- **Backend:** Node.js, Express, Sequelize.
-- **Database:** PostgreSQL (Docker for local development, Neon for production).
-- **Authentication:** JWT (HS256), Argon2id, React Context API.
-- **Testing:** Jest, React Testing Library, Node.js Test Runner.
-- **Deployment:** Vercel (frontend), Render (backend), Neon (database).
+| Resource             | Link                                                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web application      | [LibraryApp — Vercel](https://librarycapstone-frontend.vercel.app)                                                                              |
+| Backend health check | [REST API health](https://university-library-api.onrender.com/api/health)                                                                       |
+| Source repository    | [GitLab — Capstone Project](https://gitlab.com/jala-university1/cohort-3/ES.CO.CSWB-366.GA.T2.26.M2/SB/emanuel-gamarra/capstone-project-webdev) |
 
-## Project Structure
+## Features
+
+- **Book discovery:** trending and recently added books; searchable, filterable, sortable, paginated catalog.
+- **Book details:** titles, authors, covers, descriptions, and publication information obtained from Open Library where available.
+- **Authentication:** registration, login, protected personal pages, and JWT-based API access.
+- **Loans:** borrow eligible books, view due dates and loan history, and return books.
+- **Reservations:** reserve unavailable books, track reservation statuses, and manage eligible reservations.
+- **Reading tracker:** mark borrowed books as `READING` or `COMPLETED`; preserve reading history after return.
+- **Wishlist:** save and remove books independently of loan status.
+- **Personalized Home summary:** currently reading / last read, upcoming or overdue loans, and personal activity counts.
+- **Responsive UI:** React components styled with CSS Modules and shared design tokens.
+
+Availability, stock, loans, reservations, reading statuses, and wishlist membership are managed by LibraryApp's backend, **not** inferred from Open Library metadata.
+
+## Technology stack
+
+| Layer                       | Technology                                             |
+| --------------------------- | ------------------------------------------------------ |
+| Frontend                    | React, TypeScript, Vite, React Router, CSS Modules     |
+| Client state                | React Context (authentication) and component state     |
+| Backend                     | Node.js, Express, JavaScript (ES modules), REST API    |
+| Persistence                 | PostgreSQL, Sequelize ORM, Sequelize migrations        |
+| Authentication / validation | JWT, Argon2id, Zod                                     |
+| External book metadata      | Open Library API                                       |
+| Frontend testing            | Jest, React Testing Library                            |
+| Backend testing             | Node.js built-in test runner (`node:test`)             |
+| Local database              | Docker Compose (PostgreSQL)                            |
+| Deployment                  | Vercel (frontend), Render (backend), Neon (PostgreSQL) |
+
+## Architecture
 
 ```text
-├── frontend/          # React SPA
-├── backend/           # Express REST API
-├── docker-compose.yml # Local PostgreSQL
+Browser / React SPA
+   |-- Open Library API ----------> Public bibliographic metadata
+   |
+   `-- Express REST API ---------> Business rules / JWT authentication
+              |
+              `-- Sequelize -----> PostgreSQL
+                                   Users, Books, Loans,
+                                   Reservations, ReadingStatus,
+                                   WishlistItems
+```
+
+The backend follows a layered structure: **routes → controllers → services → models**. Book records are associated with Open Library **Work IDs** (`OL…W`). Open Library Edition IDs (`OL…M`) are not valid identifiers for library operations.
+
+### Repository structure
+
+```text
+.
+├── backend/
+│   ├── config/               # Sequelize CLI configuration
+│   ├── migrations/           # Database schema migrations
+│   ├── src/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── middlewares/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   └── validators/
+│   └── test/
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   ├── contexts/
+│   │   ├── hooks/
+│   │   ├── pages/
+│   │   ├── routes/
+│   │   ├── styles/
+│   │   └── types/
+│   └── test/
+├── docker-compose.yml
 └── README.md
 ```
 
-## Live Application & Repository
+## Local setup
 
-- **Live Application:** https://librarycapstone-frontend.vercel.app
-- **Backend Health Check:** https://university-library-api.onrender.com/api/health
-- **GitLab Repository:** https://gitlab.com/jala-university1/cohort-3/ES.CO.CSWB-366.GA.T2.26.M2/SB/emanuel-gamarra/capstone-project-webdev
+### Prerequisites
 
-## Local Development
+- Node.js and npm compatible with the versions specified by `backend/package.json` and `frontend/package.json` (check any `engines` fields).
+- Docker and Docker Compose for local PostgreSQL, **or** an existing PostgreSQL instance.
+- Git.
 
-**Requirements:** Node.js 22+, npm, Docker and Docker Compose.
+### 1. Clone the repository
 
-Clone the repository and configure the environment variables using the provided `.env.example` files.
-
-### Database
-
-Create a `.env` file in the project root to configure the local PostgreSQL container:
-
-```env
-POSTGRES_DB=library_db
-POSTGRES_USER=library_user
-POSTGRES_PASSWORD=your_local_password
+```bash
+git clone <REPOSITORY_CLONE_URL>
+cd capstone-project-webdev
 ```
 
-Start PostgreSQL from the project root:
+Use the HTTPS or SSH clone URL available in GitLab; access may depend on repository permissions.
+
+### 2. Configure the local database
+
+Create a `.env` file **in the repository root**, used by Docker Compose:
+
+```dotenv
+POSTGRES_DB=library_db
+POSTGRES_USER=library_user
+POSTGRES_PASSWORD=replace-with-a-local-password
+```
+
+Start PostgreSQL:
 
 ```bash
 docker compose up -d
 ```
 
-These credentials must match the corresponding database connection variables in `backend/.env`.
+If using an external PostgreSQL server instead, skip Docker Compose and supply the correct connection values in the backend environment file.
 
-### Backend
+### 3. Configure and start the backend
+
+Create `backend/.env`:
+
+```dotenv
+NODE_ENV=development
+PORT=3011
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=library_db
+DB_USER=library_user
+DB_PASSWORD=replace-with-the-same-local-password
+CLIENT_URL=http://localhost:5173
+JWT_SECRET=replace-with-a-long-random-secret
+```
+
+Generate a development JWT secret, for example, using `openssl rand -hex 32`. Keep secrets out of Git.
 
 ```bash
 cd backend
 npm ci
+npm run db:migrate:status
 npm run db:migrate
 npm run dev
 ```
 
-Configure `backend/.env` with the PostgreSQL connection variables, `CLIENT_URL`, and a random `JWT_SECRET` (at least 32 bytes of entropy).
+**Notes:** `db:migrate` applies pending migrations, including the tables for users, books, loans, reservations, reading statuses and wishlist items. Check your migration status and database target before running it, especially in production. The `npm run dev` command is the expected development start.
+
+The API defaults to port **3011** in the documented local configuration. The health endpoint is expected at:
+
+```text
+http://localhost:3011/api/health
+```
+
+### 4. Configure and start the frontend
+
+Create `frontend/.env`:
 
 ```dotenv
-PORT=3011
-
-# Database
-DB_HOST=localhost
-DB_PORT=5433
-DB_NAME=library_db
-DB_USER=library_user
-DB_PASSWORD=your_local_password
-
-# Client URL
-CLIENT_URL=http://localhost:5173
-
-# Authentication
-JWT_SECRET=your_generated_secret
+VITE_API_URL=http://localhost:3011/api
 ```
 
-Generate a secret using:
-
-```bash
-openssl rand -hex 32
-```
-
-### Frontend
-
-In a separate terminal:
+In a second terminal:
 
 ```bash
 cd frontend
@@ -96,60 +175,89 @@ npm ci
 npm run dev
 ```
 
-Configure `frontend/.env` with:
+Open the local URL printed by Vite (normally `http://localhost:5173`).
 
-```env
-VITE_API_URL=http://localhost:3011/api
-```
+**Important:** `VITE_API_URL` must include the `/api` suffix. Values prefixed with `VITE_` are embedded in the public frontend build: never put passwords, tokens, or database secrets in them.
 
-## Running Tests
+## Verification and tests
 
-### Frontend — Jest & React Testing Library
+From `frontend/`:
 
 ```bash
-cd frontend
-npm ci
-npm test
-```
-
-Tests cover three critical React components (`SearchBar`, `Pagination`, `BookCard`) and the `useBookSearch` custom hook, including mocked external dependencies.
-
-### Backend — Node.js Test Runner
-
-```bash
-cd backend
-npm ci
-npm test
-```
-
-Backend tests verify user registration, login, JWT generation, protected endpoint access, and rejection of invalid or expired tokens.
-
-Additional frontend validation:
-
-```bash
-cd frontend
 npm run lint
 npm run build
+npm test
 ```
 
-## Authentication Flow
+From `backend/`:
 
-1. Users register through `POST /api/auth/register`. Passwords are hashed using Argon2id.
-2. Login is performed through `POST /api/auth/login`, which returns a signed HS256 JWT valid for one hour.
-3. The frontend stores the JWT in `sessionStorage` and manages authentication state through React Context API.
-4. Protected API requests include the `Authorization: Bearer <token>` header.
-5. `GET /api/auth/me` validates the token and retrieves the authenticated user.
-6. Protected routes restrict access to authenticated users.
-7. Logout clears the stored token and authentication state.
+```bash
+npm test
+npm run db:migrate:status
+```
 
-Logout is client-side. Since the backend does not maintain a token revocation list, an issued JWT remains valid until expiration unless its signature or validity checks fail.
+The frontend uses Jest + React Testing Library; the backend uses Node's built-in test runner. Existing automated tests complement manual verification of cross-service workflows; they are not a substitute for production integration and accessibility testing.
 
-## Deployment
+## Deployment configuration
 
-The frontend is deployed on Vercel, the backend on Render, and PostgreSQL is hosted on Neon.
+The production architecture used for the capstone is:
 
-Production configuration uses environment variables for the database connection, JWT secret, CORS origin (`CLIENT_URL`), and API endpoint (`VITE_API_URL`).
+- **Vercel:** React/Vite SPA.
+- **Render:** Express REST API.
+- **Neon:** hosted PostgreSQL.
 
-The deployed application has been manually verified through registration, login, authenticated requests, protected routes, logout, and catalog navigation.
+### Backend (Render)
 
-**Security:** Real environment files, credentials, and JWT secrets are excluded from the repository and submission.
+Configure the backend's environment variables in the hosting dashboard:
+
+```dotenv
+NODE_ENV=production
+DB_HOST=<production-database-host>
+DB_PORT=5432
+DB_NAME=<production-database-name>
+DB_USER=<production-database-user>
+DB_PASSWORD=<production-database-password>
+JWT_SECRET=<production-random-secret>
+CLIENT_URL=https://librarycapstone-frontend.vercel.app
+```
+
+Allow the hosting provider to inject its `PORT` when appropriate. Configure production PostgreSQL TLS/SSL as required by Neon and the actual Sequelize configuration. Set `CLIENT_URL` to the exact deployed frontend origin (normally **without a trailing slash**). Verify production migrations carefully against the correct database before applying new ones.
+
+### Frontend (Vercel)
+
+```dotenv
+VITE_API_URL=https://university-library-api.onrender.com/api
+```
+
+After changing `VITE_API_URL`, **rebuild/redeploy** the frontend: Vite resolves that variable at build time. Also configure the host to serve the SPA's entry point for client-side routes so refreshing a path such as `/catalog` or `/wishlist` works.
+
+### Deployment smoke check
+
+- Verify the public frontend URL in a private/incognito window.
+- Verify `/api/health` on the public backend.
+- Confirm registration/login, an authenticated API request, and persistence after reload.
+- Check CORS and browser console for failed requests.
+- Verify loan/reservation/wishlist/reading-status routes against the deployed database.
+
+## Security and data handling
+
+- JWT-protected endpoints control access to personal resources.
+- Passwords are stored as Argon2id hashes; request payloads are validated on the backend.
+- Database credentials and JWT secrets belong in local `.env` files or hosting secrets, never in the frontend or Git.
+- Logout is handled on the client side; token expiration is enforced by the backend.
+- Open Library supplies bibliographic metadata; application business records are maintained separately.
+
+## Project scope
+
+This is an academic capstone project. Its purpose is to demonstrate full-stack SPA development, external API integration, authentication, persistence, business rules, testing, and deployment. The application is not presented as an official library service.
+
+### External services
+
+- [Open Library](https://openlibrary.org/developers/api) — public bibliographic data.
+- [Vercel](https://vercel.com/) — frontend hosting.
+- [Render](https://render.com/) — backend hosting.
+- [Neon](https://neon.tech/) — PostgreSQL hosting.
+
+## Author
+
+Developed by Emanuel Gamarra, as an individual Web Development Capstone project at **Jala University**.
