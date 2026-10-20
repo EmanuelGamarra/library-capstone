@@ -272,7 +272,7 @@ function CatalogPage() {
 
         <div className={styles.controlsRow}>
           <FilterPanel
-            key={searchParams.toString()}
+            key={`${filters.subject ?? ""}:${filters.yearFrom ?? ""}:${filters.yearTo ?? ""}`}
             initialFilters={filters}
             onApply={handleApplyFilters}
             onClear={handleClearFilters}

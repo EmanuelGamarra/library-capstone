@@ -16,7 +16,7 @@ const SUBJECT_OPTIONS = [
   { value: "biography", label: "Biography" },
   { value: "technology", label: "Technology" },
   { value: "art", label: "Art" },
-  { value: "businsess", label: "Business" },
+  { value: "business", label: "Business" },
   { value: "children", label: "Children" },
   { value: "philosophy", label: "Philosophy" },
 ];
