@@ -17,10 +17,10 @@ import type {
   OpenLibraryWorkDetail,
   OpenLibraryAuthorDetail,
 } from "../types/openLibrary";
+import { isOpenLibraryWorkId } from "../utils/openLibraryId";
 
 const OPEN_LIBRARY_URL = "https://openlibrary.org";
 const OPEN_LIBRARY_MIN_QUERY_LENGTH = 3;
-const OPEN_LIBRARY_WORK_ID_PATTERN = /^OL\d+W$/;
 export const TRENDING_BOOKS_QUERY = "trending_z_score:{0 TO *]";
 export const BOOKS_PER_PAGE = 12;
 export const MAX_CATALOG_PAGES = 100;
@@ -301,6 +301,10 @@ const getBookByExactWorkId = async (
 export async function getBookMetadata(
   openLibraryId: string,
 ): Promise<BookMetadata> {
+  if (!isOpenLibraryWorkId(openLibraryId)) {
+    throw new Error("Invalid Open Library Work ID.");
+  }
+
   const response = await fetch(
     `${OPEN_LIBRARY_URL}/works/${encodeURIComponent(openLibraryId)}.json`,
   );
@@ -347,7 +351,7 @@ export async function getBookDetails(
   signal?: AbortSignal,
   searchMetadata?: Book,
 ): Promise<BookDetail> {
-  if (!OPEN_LIBRARY_WORK_ID_PATTERN.test(openLibraryId)) {
+  if (!isOpenLibraryWorkId(openLibraryId)) {
     throw new Error("Invalid Open Library Work ID.");
   }
 

@@ -124,13 +124,26 @@ type ActionProps = Omit<
 >;
 
 function renderActions(auth: AuthContextValue, props: ActionProps = {}) {
+  return renderActionsForBook("OL1W", auth, props);
+}
+
+function renderActionsForBook(
+  openLibraryId: string,
+  auth: AuthContextValue,
+  props: ActionProps = {},
+) {
   return render(
     <AuthContext.Provider value={auth}>
       <MemoryRouter initialEntries={["/catalog?q=react"]}>
         <Routes>
           <Route
             path="/catalog"
-            element={<BookBorrowActions openLibraryId="OL1W" {...props} />}
+            element={
+              <BookBorrowActions
+                openLibraryId={openLibraryId}
+                {...props}
+              />
+            }
           />
           <Route path="/login" element={<LoginProbe />} />
         </Routes>
@@ -143,6 +156,17 @@ beforeEach(() => {
   mockGetBookAvailability.mockReset();
   mockBorrowBook.mockReset();
   mockCreateReservation.mockReset();
+});
+
+test("an Edition ID does not trigger availability, borrow, or reservation requests", () => {
+  renderActionsForBook("OL123M", authValue());
+
+  expect(screen.getByRole("alert")).toHaveTextContent(
+    "Book actions are unavailable because this record has an invalid Open Library Work ID.",
+  );
+  expect(mockGetBookAvailability).not.toHaveBeenCalled();
+  expect(mockBorrowBook).not.toHaveBeenCalled();
+  expect(mockCreateReservation).not.toHaveBeenCalled();
 });
 
 test("successful borrow updates the button and notifies the parent", async () => {

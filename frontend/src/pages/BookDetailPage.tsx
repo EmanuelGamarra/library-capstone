@@ -13,6 +13,7 @@ import BookBorrowActions from "../components/books/BookBorrowActions";
 import ReadingTracker from "../components/books/ReadingTracker";
 import WishlistButton from "../components/books/WishlistButton";
 import type { Book } from "../types/book";
+import { isOpenLibraryWorkId } from "../utils/openLibraryId";
 import styles from "./BookDetailPage.module.css";
 
 const isMatchingSearchMetadata = (
@@ -97,7 +98,7 @@ function BookDetailPage() {
   const [ownershipRetryKey, setOwnershipRetryKey] = useState(0);
 
   useEffect(() => {
-    if (!bookId || !/^OL\d+W$/.test(bookId)) {
+    if (!bookId || !isOpenLibraryWorkId(bookId)) {
       return;
     }
 
@@ -141,7 +142,12 @@ function BookDetailPage() {
   }, [bookId, retryKey, searchMetadata]);
 
   useEffect(() => {
-    if (!isAuthenticated || !token || !bookId || !/^OL\d+W$/.test(bookId)) {
+    if (
+      !isAuthenticated ||
+      !token ||
+      !bookId ||
+      !isOpenLibraryWorkId(bookId)
+    ) {
       return;
     }
 
@@ -198,7 +204,7 @@ function BookDetailPage() {
     };
   }, [token, isAuthenticated, bookId, ownershipRetryKey, handleAuthError]);
 
-  const invalidBookId = !bookId || !/^OL\d+W$/.test(bookId);
+  const invalidBookId = !bookId || !isOpenLibraryWorkId(bookId);
 
   function handleBorrowSuccess(openLibraryId: string) {
     setOwnership((current) => {

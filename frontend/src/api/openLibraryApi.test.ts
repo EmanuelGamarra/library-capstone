@@ -1,5 +1,5 @@
 import type { Book } from "../types/book";
-import { getBookDetails } from "./openLibraryApi";
+import { getBookDetails, getBookMetadata } from "./openLibraryApi";
 
 const mockResponse = (body: unknown, status = 200): Response => {
   return {
@@ -148,6 +148,9 @@ describe("getBookDetails", () => {
 
   test("rejects Edition IDs without making a request", async () => {
     await expect(getBookDetails("OL123M")).rejects.toThrow(
+      "Invalid Open Library Work ID.",
+    );
+    await expect(getBookMetadata("OL123M")).rejects.toThrow(
       "Invalid Open Library Work ID.",
     );
     expect(fetchMock).not.toHaveBeenCalled();

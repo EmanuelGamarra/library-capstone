@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import BookCover from "../books/BookCover";
 import type { BookMetadata } from "../../types/bookMetadata";
 import type { Reservation } from "../../types/reservation";
+import { isOpenLibraryWorkId } from "../../utils/openLibraryId";
 import styles from "./ReservationTable.module.css";
 
 interface ReservationTableProps {
@@ -56,6 +57,9 @@ function ReservationTable({
             const isActive =
               reservation.status === "PENDING" ||
               reservation.status === "READY";
+            const hasValidOpenLibraryId = isOpenLibraryWorkId(
+              reservation.openLibraryId,
+            );
 
             return (
               <tr key={reservation.id}>
@@ -99,17 +103,22 @@ function ReservationTable({
                 </td>
                 <td>
                   <div className={styles.actions}>
-                    {reservation.status === "READY" && (
-                      <button
-                        type="button"
-                        className={styles.borrowButton}
-                        onClick={() => onBorrow(reservation)}
-                        disabled={busyId !== null}
-                        aria-label={`Borrow ${title}`}
-                      >
-                        {isBusy ? "Borrowing..." : "Borrow"}
-                      </button>
-                    )}
+                    {reservation.status === "READY" &&
+                      (hasValidOpenLibraryId ? (
+                        <button
+                          type="button"
+                          className={styles.borrowButton}
+                          onClick={() => onBorrow(reservation)}
+                          disabled={busyId !== null}
+                          aria-label={`Borrow ${title}`}
+                        >
+                          {isBusy ? "Borrowing..." : "Borrow"}
+                        </button>
+                      ) : (
+                        <span className={styles.noAction} role="alert">
+                          Borrow unavailable: invalid Open Library Work ID.
+                        </span>
+                      ))}
 
                     {isActive && (
                       <button

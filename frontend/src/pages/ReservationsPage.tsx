@@ -9,6 +9,7 @@ import { useAuthErrorHandler } from "../hooks/useAuthErrorHandler";
 
 import type { Reservation } from "../types/reservation";
 import type { BookMetadata } from "../types/bookMetadata";
+import { isOpenLibraryWorkId } from "../utils/openLibraryId";
 
 import ReservationTable from "../components/reservations/ReservationTable";
 import styles from "./ReservationsPage.module.css";
@@ -140,16 +141,26 @@ function ReservationsPage() {
   ) {
     if (!token || busyRequest !== null) return;
 
-    const requestToken = token;
-
-    setBusyRequest({ id: reservation.id, token: requestToken });
     setActionError("");
     setMessage("");
 
+    if (action === "borrow") {
+      if (reservation.status !== "READY") return;
+
+      if (!isOpenLibraryWorkId(reservation.openLibraryId)) {
+        setActionError(
+          "This reservation has an invalid Open Library Work ID and cannot be borrowed.",
+        );
+        return;
+      }
+    }
+
+    const requestToken = token;
+
+    setBusyRequest({ id: reservation.id, token: requestToken });
+
     try {
       if (action === "borrow") {
-        if (reservation.status !== "READY") return;
-
         await borrowBook(reservation.openLibraryId, requestToken);
       } else {
         if (

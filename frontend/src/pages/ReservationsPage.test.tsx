@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
 import { cancelReservation, getMyReservations } from "../api/reservationApi";
+import { borrowBook } from "../api/loanApi";
 import { getBookMetadata } from "../api/openLibraryApi";
 import { AuthContext } from "../contexts/AuthContext";
 import type { AuthContextValue } from "../contexts/AuthContext";
@@ -42,6 +43,7 @@ const mockGetMyReservations = getMyReservations as jest.MockedFunction<
 const mockGetBookMetadata = getBookMetadata as jest.MockedFunction<
   typeof getBookMetadata
 >;
+const mockBorrowBook = borrowBook as jest.MockedFunction<typeof borrowBook>;
 
 const pendingReservation: Reservation = {
   id: "reservation-1",
@@ -114,4 +116,37 @@ test("successful cancellation moves a pending reservation to history", async () 
       name: "Cancel reservation for Reserved Book",
     }),
   ).not.toBeInTheDocument();
+});
+
+test("a READY reservation with an Edition ID cannot be borrowed", async () => {
+  const invalidReservation: Reservation = {
+    ...pendingReservation,
+    openLibraryId: "OL123M",
+    status: "READY",
+    readyAt: "2026-10-17T00:00:00.000Z",
+    expiresAt: "2026-10-19T00:00:00.000Z",
+  };
+
+  mockGetMyReservations.mockResolvedValue({
+    reservations: [invalidReservation],
+  });
+  mockGetBookMetadata.mockRejectedValue(
+    new Error("Invalid Open Library Work ID."),
+  );
+
+  render(
+    <AuthContext.Provider value={auth}>
+      <MemoryRouter>
+        <ReservationsPage />
+      </MemoryRouter>
+    </AuthContext.Provider>,
+  );
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Borrow unavailable: invalid Open Library Work ID.",
+  );
+  expect(
+    screen.queryByRole("button", { name: "Borrow OL123M" }),
+  ).not.toBeInTheDocument();
+  expect(mockBorrowBook).not.toHaveBeenCalled();
 });

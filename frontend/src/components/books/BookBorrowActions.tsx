@@ -8,6 +8,7 @@ import { useAuthErrorHandler } from "../../hooks/useAuthErrorHandler";
 import type { BookAvailability } from "../../types/loan";
 import { createReservation } from "../../api/reservationApi";
 import type { Reservation } from "../../types/reservation";
+import { isOpenLibraryWorkId } from "../../utils/openLibraryId";
 import styles from "./BookBorrowActions.module.css";
 
 interface BookBorrowActionsProps {
@@ -33,6 +34,7 @@ function BookBorrowActions({
   const handleAuthError = useAuthErrorHandler();
   const navigate = useNavigate();
   const location = useLocation();
+  const hasValidOpenLibraryId = isOpenLibraryWorkId(openLibraryId);
   const operationContext = `${openLibraryId}:${token ?? "anonymous"}`;
   const operationContextRef = useRef(operationContext);
   const mountedRef = useRef(false);
@@ -82,6 +84,10 @@ function BookBorrowActions({
   }, []);
 
   useEffect(() => {
+    if (!hasValidOpenLibraryId) {
+      return;
+    }
+
     let cancelled = false;
 
     async function loadAvailability() {
@@ -108,9 +114,11 @@ function BookBorrowActions({
     return () => {
       cancelled = true;
     };
-  }, [openLibraryId]);
+  }, [hasValidOpenLibraryId, openLibraryId]);
 
   async function handleBorrow() {
+    if (!hasValidOpenLibraryId) return;
+
     if (!isAuthenticated || !token) {
       navigate("/login", {
         state: { from: location },
@@ -207,6 +215,8 @@ function BookBorrowActions({
   }
 
   async function handleReserve() {
+    if (!hasValidOpenLibraryId) return;
+
     if (!isAuthenticated || !token) {
       navigate("/login", {
         state: { from: location },
@@ -290,6 +300,8 @@ function BookBorrowActions({
   }
 
   async function retryAvailability() {
+    if (!hasValidOpenLibraryId) return;
+
     const requestContext = operationContext;
 
     setIsLoading(true);
@@ -324,6 +336,17 @@ function BookBorrowActions({
         setIsLoading(false);
       }
     }
+  }
+
+  if (!hasValidOpenLibraryId) {
+    return (
+      <div className={styles.actions}>
+        <p className={styles.error} role="alert">
+          Book actions are unavailable because this record has an invalid Open
+          Library Work ID.
+        </p>
+      </div>
+    );
   }
 
   const isActionDisabled =

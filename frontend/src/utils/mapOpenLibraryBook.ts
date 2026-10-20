@@ -1,12 +1,13 @@
 import type { Book } from "../types/book";
 import type { OpenLibraryBookDocument } from "../types/openLibrary";
+import { isOpenLibraryWorkId } from "./openLibraryId";
 
 const OPEN_LIBRARY_COVERS_URL = "https://covers.openlibrary.org";
 
 const getWorkId = (key: string): string | null => {
-  const match = key.match(/^(?:\/works\/)?(OL\d+W)$/);
+  const workId = key.startsWith("/works/") ? key.slice("/works/".length) : key;
 
-  return match ? match[1] : null;
+  return isOpenLibraryWorkId(workId) ? workId : null;
 };
 
 const getCoverUrl = (coverId?: number): string | null => {
