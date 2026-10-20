@@ -1,5 +1,5 @@
 import type { Book } from "../types/book";
-import { getBookDetails, getBookMetadata } from "./openLibraryApi";
+import { getBookDetails, getBookMetadata, searchBooks } from "./openLibraryApi";
 
 const mockResponse = (body: unknown, status = 200): Response => {
   return {
@@ -104,9 +104,7 @@ describe("getBookDetails", () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining(
-        "q=key%3A%22%2Fworks%2FOL123W%22",
-      ),
+      expect.stringContaining("q=key%3A%22%2Fworks%2FOL123W%22"),
       { signal: undefined },
     );
   });
@@ -155,4 +153,71 @@ describe("getBookDetails", () => {
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });
+});
+
+describe("searchBooks", () => {
+  const originalFetch = globalThis.fetch;
+  const fetchMock = jest.fn() as jest.MockedFunction<typeof fetch>;
+
+  const search = (overrides: Partial<Parameters<typeof searchBooks>[0]> = {}) =>
+    searchBooks({
+      query: "react",
+      type: "all",
+      filters: {},
+      sort: "relevance",
+      page: 1,
+      ...overrides,
+    });
+
+  const requestedUrl = (): URL => {
+    const input = fetchMock.mock.calls[0]?.[0];
+
+    expect(input).toBeDefined();
+
+    return new URL(String(input));
+  };
+
+  beforeAll(() => {
+    globalThis.fetch = fetchMock;
+  });
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue(
+      mockResponse({ num_found: 0, start: 0, docs: [] }),
+    );
+  });
+
+  afterAll(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  test.each([
+    [{ yearFrom: 2000 }, "react AND first_publish_year:[2000 TO *]"],
+    [{ yearTo: 2020 }, "react AND first_publish_year:[* TO 2020]"],
+    [
+      { yearFrom: 2000, yearTo: 2020 },
+      "react AND first_publish_year:[2000 TO 2020]",
+    ],
+    [{ subject: "science fiction" }, 'react AND subject:"science fiction"'],
+  ])(
+    "builds the expected query for filters %o",
+    async (filters, expectedQuery) => {
+      await search({ filters });
+
+      expect(requestedUrl().searchParams.get("q")).toBe(expectedQuery);
+    },
+  );
+
+  test.each([
+    ["newest", "new"],
+    ["oldest", "old"],
+  ] as const)(
+    "maps %s sorting to Open Library's %s sort",
+    async (sort, expected) => {
+      await search({ sort });
+
+      expect(requestedUrl().searchParams.get("sort")).toBe(expected);
+    },
+  );
 });
