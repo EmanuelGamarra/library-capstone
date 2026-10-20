@@ -72,10 +72,11 @@ const buildFilterClauses = (filters?: BookFilters): string[] => {
     clauses.push(`subject:"${escapedSubject}"`);
   }
 
-  if (filters.yearFrom !== undefined && filters.yearTo !== undefined) {
-    const form = filters.yearFrom ?? "*";
+  if (filters.yearFrom !== undefined || filters.yearTo !== undefined) {
+    const from = filters.yearFrom ?? "*";
     const to = filters.yearTo ?? "*";
-    clauses.push(`first_publish_year:[${form} TO ${to}]`);
+
+    clauses.push(`first_publish_year:[${from} TO ${to}]`);
   }
 
   return clauses;
