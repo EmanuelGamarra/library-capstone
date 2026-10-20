@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import BookCard from "./BookCard";
 
 jest.mock("./BookCover", () => ({
@@ -20,10 +21,22 @@ const book = {
   coverUrl: null,
 } as React.ComponentProps<typeof BookCard>["book"];
 
-test("renders book information and links to book details", () => {
+function LocationState() {
+  const location = useLocation();
+  const state = location.state as { searchMetadata?: typeof book } | null;
+
+  return <span>Metadata: {state?.searchMetadata?.title ?? "missing"}</span>;
+}
+
+test("renders book information and passes Search metadata to book details", async () => {
+  const user = userEvent.setup();
+
   render(
-    <MemoryRouter>
-      <BookCard book={book} />
+    <MemoryRouter initialEntries={["/"]}>
+      <Routes>
+        <Route path="/" element={<BookCard book={book} />} />
+        <Route path="/books/:bookId" element={<LocationState />} />
+      </Routes>
     </MemoryRouter>,
   );
   expect(
@@ -32,6 +45,10 @@ test("renders book information and links to book details", () => {
   expect(screen.getByText("Robert C. Martin")).toBeInTheDocument();
   expect(screen.getByText("First published 2008")).toBeInTheDocument();
   expect(screen.getByRole("link")).toHaveAttribute("href", "/books/OL123W");
+
+  await user.click(screen.getByRole("link"));
+
+  expect(screen.getByText("Metadata: Clean Code")).toBeInTheDocument();
 });
 
 test("renders fallback metadata when author and publication year are missing", () => {

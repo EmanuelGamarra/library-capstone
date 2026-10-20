@@ -12,7 +12,32 @@ import type { Reservation } from "../types/reservation";
 import BookBorrowActions from "../components/books/BookBorrowActions";
 import ReadingTracker from "../components/books/ReadingTracker";
 import WishlistButton from "../components/books/WishlistButton";
+import type { Book } from "../types/book";
 import styles from "./BookDetailPage.module.css";
+
+const isMatchingSearchMetadata = (
+  value: unknown,
+  openLibraryId?: string,
+): value is Book => {
+  if (!openLibraryId || typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const metadata = value as Partial<Book>;
+
+  return (
+    metadata.id === openLibraryId &&
+    typeof metadata.title === "string" &&
+    Array.isArray(metadata.authors) &&
+    metadata.authors.every((author) => typeof author === "string") &&
+    ((typeof metadata.coverUrl === "string" &&
+      metadata.coverUrl.trim().length > 0) ||
+      metadata.coverUrl === null) &&
+    ((typeof metadata.firstPublishYear === "number" &&
+      Number.isInteger(metadata.firstPublishYear)) ||
+      metadata.firstPublishYear === null)
+  );
+};
 
 function BookDetailPage() {
   const location = useLocation();
@@ -30,7 +55,15 @@ function BookDetailPage() {
 
   const navigationState = location.state as {
     returnTo?: unknown;
+    searchMetadata?: unknown;
   } | null;
+
+  const searchMetadata = isMatchingSearchMetadata(
+    navigationState?.searchMetadata,
+    bookId,
+  )
+    ? navigationState.searchMetadata
+    : undefined;
 
   const returnTo =
     typeof navigationState?.returnTo === "string" &&
@@ -77,13 +110,17 @@ function BookDetailPage() {
       setBook(null);
 
       try {
-        const result = await getBookDetails(bookId!, controller.signal);
+        const result = await getBookDetails(
+          bookId!,
+          controller.signal,
+          searchMetadata,
+        );
 
         if (!cancelled) {
           setBook(result);
         }
       } catch (err) {
-        if (!cancelled) {
+        if (!cancelled && !controller.signal.aborted) {
           setError(
             err instanceof Error ? err.message : "Unable to load book details.",
           );
@@ -101,7 +138,7 @@ function BookDetailPage() {
       cancelled = true;
       controller.abort();
     };
-  }, [bookId, retryKey]);
+  }, [bookId, retryKey, searchMetadata]);
 
   useEffect(() => {
     if (!isAuthenticated || !token || !bookId || !/^OL\d+W$/.test(bookId)) {

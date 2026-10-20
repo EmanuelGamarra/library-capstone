@@ -40,7 +40,7 @@ function BookCard({
       <Link
         className={styles.cardLink}
         to={`/books/${book.id}`}
-        state={{ returnTo }}
+        state={{ returnTo, searchMetadata: book }}
       >
         <div className={styles.coverWrapper}>
           <BookCover coverUrl={book.coverUrl} title={book.title} />

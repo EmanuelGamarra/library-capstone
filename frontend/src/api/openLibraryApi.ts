@@ -7,7 +7,10 @@ import type {
   BookSearchResult,
 } from "../types/bookSearch";
 import type { OpenLibrarySearchResponse } from "../types/openLibrary";
-import { mapValidOpenLibraryBooks } from "../utils/mapOpenLibraryBook";
+import {
+  mapOpenLibraryBook,
+  mapValidOpenLibraryBooks,
+} from "../utils/mapOpenLibraryBook";
 import type { BookMetadata } from "../types/bookMetadata";
 import type { BookDetail } from "../types/bookDetail";
 import type {
@@ -17,6 +20,7 @@ import type {
 
 const OPEN_LIBRARY_URL = "https://openlibrary.org";
 const OPEN_LIBRARY_MIN_QUERY_LENGTH = 3;
+const OPEN_LIBRARY_WORK_ID_PATTERN = /^OL\d+W$/;
 export const TRENDING_BOOKS_QUERY = "trending_z_score:{0 TO *]";
 export const BOOKS_PER_PAGE = 12;
 export const MAX_CATALOG_PAGES = 100;
@@ -24,6 +28,15 @@ export const MAX_CATALOG_PAGES = 100;
 const BOOK_FIELDS = "key,title,author_name,cover_i,first_publish_year";
 const MAX_SEARCH_BATCH_SIZE = 1000;
 const MAX_SEARCH_REQUESTS = 4;
+
+const hasCompleteCardMetadata = (book: Book): boolean => {
+  return (
+    book.title.trim().length > 0 &&
+    book.authors.some((author) => author.trim().length > 0) &&
+    book.coverUrl !== null &&
+    book.firstPublishYear !== null
+  );
+};
 
 const escapeQueryValue = (value: string): string => {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -82,11 +95,13 @@ const buildSearchQuery = ({
 export const getTrendingBooks = async (
   limit = BOOKS_PER_PAGE,
 ): Promise<Book[]> => {
+  const fetchLimit = Math.min(Math.max(limit * 12, 48), 100);
+
   const params = new URLSearchParams({
     q: TRENDING_BOOKS_QUERY,
     sort: "trending",
     fields: BOOK_FIELDS,
-    limit: limit.toString(),
+    limit: fetchLimit.toString(),
   });
 
   const response = await fetch(
@@ -99,16 +114,21 @@ export const getTrendingBooks = async (
 
   const data: OpenLibrarySearchResponse = await response.json();
 
-  return mapValidOpenLibraryBooks(data.docs);
+  return mapValidOpenLibraryBooks(data.docs)
+    .filter(hasCompleteCardMetadata)
+    .slice(0, limit);
 };
 
 export const getRecentlyAddedBooks = async (
   limit = BOOKS_PER_PAGE,
 ): Promise<Book[]> => {
-  const fetchLimit = Math.max(limit * 2, BOOKS_PER_PAGE);
   const currentYear = new Date().getFullYear();
+  const earliestYear = currentYear - 2;
+
+  const fetchLimit = Math.min(Math.max(limit * 12, 48), 100);
+
   const params = new URLSearchParams({
-    q: `first_publish_year:[1000 TO ${currentYear}]`,
+    q: `first_publish_year:[${earliestYear} TO ${currentYear}]`,
     sort: "new",
     fields: BOOK_FIELDS,
     limit: fetchLimit.toString(),
@@ -119,12 +139,20 @@ export const getRecentlyAddedBooks = async (
   );
 
   if (!response.ok) {
-    throw new Error("Failed to fetch recently added books from Open Library");
+    throw new Error(
+      `Unable to load recently added books (HTTP ${response.status})`,
+    );
   }
 
   const data: OpenLibrarySearchResponse = await response.json();
 
-  return mapValidOpenLibraryBooks(data.docs).slice(0, limit);
+  if (!Array.isArray(data.docs)) {
+    throw new Error("Invalid Recently Added response from Open Library");
+  }
+
+  return mapValidOpenLibraryBooks(data.docs)
+    .filter(hasCompleteCardMetadata)
+    .slice(0, limit);
 };
 
 export const searchBooks = async ({
@@ -233,6 +261,43 @@ interface OpenLibraryAuthor {
   name: string;
 }
 
+const hasAuthors = (book?: Book): boolean => {
+  return book?.authors.some((author) => author.trim().length > 0) ?? false;
+};
+
+const getBookByExactWorkId = async (
+  openLibraryId: string,
+  signal?: AbortSignal,
+): Promise<Book | null> => {
+  const workKey = `/works/${openLibraryId}`;
+  const params = new URLSearchParams({
+    q: `key:"${workKey}"`,
+    fields: BOOK_FIELDS,
+    limit: "1",
+  });
+
+  const response = await fetch(
+    `${OPEN_LIBRARY_URL}/search.json?${params.toString()}`,
+    { signal },
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data: OpenLibrarySearchResponse = await response.json();
+
+  if (!Array.isArray(data.docs)) {
+    return null;
+  }
+
+  const matchingDocument = data.docs.find(
+    (document) => document.key === openLibraryId || document.key === workKey,
+  );
+
+  return matchingDocument ? mapOpenLibraryBook(matchingDocument) : null;
+};
+
 export async function getBookMetadata(
   openLibraryId: string,
 ): Promise<BookMetadata> {
@@ -280,7 +345,12 @@ export async function getBookMetadata(
 export async function getBookDetails(
   openLibraryId: string,
   signal?: AbortSignal,
+  searchMetadata?: Book,
 ): Promise<BookDetail> {
+  if (!OPEN_LIBRARY_WORK_ID_PATTERN.test(openLibraryId)) {
+    throw new Error("Invalid Open Library Work ID.");
+  }
+
   const workResponse = await fetch(
     `${OPEN_LIBRARY_URL}/works/${encodeURIComponent(openLibraryId)}.json`,
     { signal },
@@ -323,7 +393,7 @@ export async function getBookDetails(
     throw new DOMException("Request aborted", "AbortError");
   }
 
-  const authors = authorResults.flatMap((result) =>
+  const workAuthors = authorResults.flatMap((result) =>
     result.status === "fulfilled" && result.value ? [result.value] : [],
   );
 
@@ -338,15 +408,49 @@ export async function getBookDetails(
     /\b(1[5-9]\d{2}|20\d{2}|21\d{2})\b/,
   );
 
+  const navigationMetadata =
+    searchMetadata?.id === openLibraryId ? searchMetadata : undefined;
+  const navigationCoverUrl = navigationMetadata?.coverUrl?.trim() || null;
+  const navigationYear = navigationMetadata?.firstPublishYear ?? null;
+
+  const needsSearchLookup =
+    (workAuthors.length === 0 && !hasAuthors(navigationMetadata)) ||
+    (!coverId && !navigationCoverUrl) ||
+    (!yearMatch && navigationYear === null);
+
+  let exactSearchMetadata: Book | null = null;
+
+  if (needsSearchLookup) {
+    try {
+      exactSearchMetadata = await getBookByExactWorkId(openLibraryId, signal);
+    } catch (error) {
+      if (signal?.aborted) {
+        throw error;
+      }
+    }
+  }
+
+  const fallbackAuthors = hasAuthors(navigationMetadata)
+    ? (navigationMetadata?.authors ?? [])
+    : (exactSearchMetadata?.authors ?? []);
+  const fallbackCoverUrl =
+    navigationCoverUrl ?? exactSearchMetadata?.coverUrl ?? null;
+  const fallbackYear =
+    navigationYear ?? exactSearchMetadata?.firstPublishYear ?? null;
+  const authors =
+    workAuthors.length > 0
+      ? workAuthors
+      : fallbackAuthors.filter((author) => author.trim().length > 0);
+
   return {
     id: openLibraryId,
     title: work.title,
     authors,
     coverUrl: coverId
       ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
-      : null,
+      : fallbackCoverUrl,
     description: description?.trim() || null,
-    firstPublishYear: yearMatch ? Number(yearMatch[1]) : null,
+    firstPublishYear: yearMatch ? Number(yearMatch[1]) : fallbackYear,
     subjects: Array.isArray(work.subjects)
       ? work.subjects
           .filter((subject): subject is string => typeof subject === "string")

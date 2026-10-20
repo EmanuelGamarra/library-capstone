@@ -23,44 +23,71 @@ function HomePage() {
   const [trendingError, setTrendingError] = useState<string | null>(null);
   const [recentError, setRecentError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadTrendingBooks = async () => {
-      try {
-        setIsTrendingLoading(true);
-        setTrendingError(null);
+  const [recentRetryKey, setRecentRetryKey] = useState(0);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTrendingBooks() {
+      setIsTrendingLoading(true);
+      setTrendingError(null);
+
+      try {
         const books = await getTrendingBooks(HOME_SECTION_BOOK_LIMIT);
 
-        setTrendingBooks(books);
+        if (!cancelled) {
+          setTrendingBooks(books);
+        }
       } catch (error) {
-        console.error(error);
-
-        setTrendingError("Unable to load trending books.");
+        if (!cancelled) {
+          console.error("Trending Books:", error);
+          setTrendingError("Unable to load trending books.");
+        }
       } finally {
-        setIsTrendingLoading(false);
+        if (!cancelled) {
+          setIsTrendingLoading(false);
+        }
       }
+    }
+
+    void loadTrendingBooks();
+
+    return () => {
+      cancelled = true;
     };
+  }, []);
 
-    const loadRecentBooks = async () => {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRecentBooks() {
+      setIsRecentLoading(true);
+      setRecentError(null);
+
       try {
-        setIsRecentLoading(true);
-        setRecentError(null);
-
         const books = await getRecentlyAddedBooks(HOME_SECTION_BOOK_LIMIT);
 
-        setRecentBooks(books);
+        if (!cancelled) {
+          setRecentBooks(books);
+        }
       } catch (error) {
-        console.error(error);
-
-        setRecentError("Unable to load recently added books.");
+        if (!cancelled) {
+          console.error("Recently Added:", error);
+          setRecentError("Unable to load recently added books.");
+        }
       } finally {
-        setIsRecentLoading(false);
+        if (!cancelled) {
+          setIsRecentLoading(false);
+        }
       }
-    };
+    }
 
-    loadTrendingBooks();
-    loadRecentBooks();
-  }, []);
+    void loadRecentBooks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recentRetryKey]);
 
   return (
     <main className={styles.page}>
@@ -111,7 +138,9 @@ function HomePage() {
           <CatalogState
             type="error"
             title="We couldn't load trending books"
-            message="Please try again later."
+            message="Please try again."
+            actionLabel="Try again"
+            onAction={() => setRecentRetryKey((value) => value + 1)}
           />
         )}
 

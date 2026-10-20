@@ -57,7 +57,7 @@ function WishlistBookCard({
 
       <Link
         to={`/books/${openLibraryId}`}
-        state={{ returnTo: "/wishlist" }}
+        state={{ returnTo: "/wishlist", searchMetadata: book ?? undefined }}
         className={styles.bookLink}
       >
         <div className={styles.coverWrapper}>
