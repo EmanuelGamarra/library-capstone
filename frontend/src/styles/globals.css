@@ -1,23 +1,23 @@
 :root {
   /* Brand colors */
-  --color-primary: #111a26;
-  --color-secondary: #c9a227;
-  --color-accent: #3d5a6c;
+  --color-primary: #17283b;
+  --color-primary-hover: #253f56;
+  --color-secondary: #c6a044;
+  --color-accent: #315969;
 
-  --color-background: #faf6ef;
+  --color-background: #f7f4ed;
   --color-surface: #ffffff;
-  --color-surface-subtle: #f8f9fa;
-  --color-surface-hover: #f1f3f5;
-  --color-surface-muted: #e8e1d3;
+  --color-surface-subtle: #fcfaf6;
+  --color-surface-hover: #f4efdf;
+  --color-surface-muted: #f0e5ca;
 
-  --color-text-primary: #111a26;
-  --color-text-secondary: #5f6773;
+  --color-text-primary: #17283b;
+  --color-text-secondary: #586575;
   --color-text-on-primary: #ffffff;
 
-  --color-border: #d9dee5;
-  --color-overlay: rgba(17, 26, 38, 0.45);
-  --color-accent-ring: rgba(61, 90, 108, 0.12);
-  --color-primary-hover: #2c3b4c;
+  --color-border: #d9dee3;
+  --color-overlay: rgba(23, 40, 59, 0.5);
+  --color-accent-ring: rgba(49, 89, 105, 0.15);
 
   /* Functional colors */
   --color-success-background: #e4efe1;

@@ -5,7 +5,10 @@
 }
 
 .drawer {
+  display: flex;
   min-width: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
 }
 
 .mainArea {

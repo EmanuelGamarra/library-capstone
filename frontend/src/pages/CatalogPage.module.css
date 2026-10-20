@@ -1,7 +1,8 @@
 .page {
-  width: min(calc(100% - 32px), 1200px);
+  width: 100%;
+  max-width: 1248px;
   margin: 0 auto;
-  padding: var(--spacing-xxl) 0 var(--spacing-xxxl);
+  padding: var(--spacing-xxl) var(--spacing-base) var(--spacing-xxxl);
 }
 
 .pageHeader {
@@ -48,7 +49,7 @@
 
 @media (min-width: 768px) {
   .page {
-    width: min(calc(100% - 48px), 1200px);
+    padding-inline: var(--spacing-lg);
   }
 }
 

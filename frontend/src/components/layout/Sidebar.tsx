@@ -69,12 +69,6 @@ function Sidebar({ onClose }: SidebarProps) {
             Wishlist
           </NavLink>
         </div>
-
-        <div className={styles.navGroup}>
-          <NavLink to="/settings" className={getNavLinkClass}>
-            Settings
-          </NavLink>
-        </div>
       </nav>
     </aside>
   );

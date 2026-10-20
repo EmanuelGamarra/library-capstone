@@ -23,6 +23,7 @@ function HomePage() {
   const [trendingError, setTrendingError] = useState<string | null>(null);
   const [recentError, setRecentError] = useState<string | null>(null);
 
+  const [trendingRetryKey, setTrendingRetryKey] = useState(0);
   const [recentRetryKey, setRecentRetryKey] = useState(0);
 
   useEffect(() => {
@@ -55,7 +56,7 @@ function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [trendingRetryKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,7 +141,7 @@ function HomePage() {
             title="We couldn't load trending books"
             message="Please try again."
             actionLabel="Try again"
-            onAction={() => setRecentRetryKey((value) => value + 1)}
+            onAction={() => setTrendingRetryKey((value) => value + 1)}
           />
         )}
 
@@ -184,6 +185,8 @@ function HomePage() {
             type="error"
             title="We couldn't load recently added books"
             message="Please try again later."
+            actionLabel="Try again"
+            onAction={() => setRecentRetryKey((value) => value + 1)}
           />
         )}
 
